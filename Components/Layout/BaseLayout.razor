@@ -1,0 +1,12 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider/>
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudPopoverProvider />
+
+@ChildContent
+
+@code {
+    [Parameter] public RenderFragment ChildContent { get; set; }
+}
