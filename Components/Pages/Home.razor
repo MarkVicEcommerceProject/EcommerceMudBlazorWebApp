@@ -1,59 +1,387 @@
 ﻿@page "/"
+@using ECommerceMudblazorWebApp.Data.Models
+@using MudBlazor
+
+@inject NavigationManager NavigationManager
 
 <PageTitle>Home</PageTitle>
 
-<MudText Typo="Typo.h3" GutterBottom="true">Hello, world!</MudText>
-<MudText Class="mb-8">Welcome to your new app, powered by MudBlazor and the .NET 9 Template!</MudText>
+<section class="font-inter mx-auto flex max-w-7xl flex-row gap-4 md:mx-auto md:px-4">
 
-<MudAlert Severity="Severity.Normal" ContentAlignment="HorizontalAlignment.Start">
-    You can find documentation and examples on our website here:
-    <MudLink Href="https://mudblazor.com" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        <b>www.mudblazor.com</b>
-    </MudLink>
-</MudAlert>
+    <!-- Sidebar Categories -->
+    <aside class="hidden w-64 md:block">
+        <div class="rounded-lg bg-white p-4 shadow-sm">
+            <h3 class="mb-4 font-semibold text-gray-800">Shop by Category</h3>
+            <nav class="space-y-2">
+                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Woman's Fashion</MudLink>
+                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Men's Fashion</MudLink>
+                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Electronics</MudLink>
+                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Home & Lifestyle</MudLink>
+                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Medicine</MudLink>
+                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Sports & Outdoor</MudLink>
+                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Baby's & Toys</MudLink>
+                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Groceries & Pets</MudLink>
+                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Health & Beauty</MudLink>
+            </nav>
+        </div>
+    </aside>
 
-<br />
-<MudText Typo="Typo.h5" GutterBottom="true">Interactivity in this Template</MudText>
-<br />
-<MudText Typo="Typo.body2">
-    When you opt for the "Global" Interactivity Location, <br />
-    the render modes are defined in App.razor and consequently apply to all child components.<br />
-    In this case, providers are globally set in the MainLayout.<br />
-    <br />
-    On the other hand, if you choose the "Per page/component" Interactivity Location,<br />
-    it is necessary to include the <br />
-    <br />
-    &lt;MudPopoverProvider /&gt; <br />
-    &lt;MudDialogProvider /&gt; <br />
-    &lt;MudSnackbarProvider /&gt; <br />
-    <br />
-    components on every interactive page.<br />
-    <br />
-    If a render mode is not specified for a page, it defaults to Server-Side Rendering (SSR),<br />
-    similar to this page. While MudBlazor allows pages to be rendered in SSR,<br />
-    please note that interactive features, such as buttons and dropdown menus, will not be functional.
-</MudText>
+    <!-- Hero Carousel Section -->
+    <div class="flex-1">
+        <MudCarousel Class="mud-width-full min-h-52 md:h-full" ShowArrows="@arrows" ShowBullets="@bullets" EnableSwipeGesture="@enableSwipeGesture" AutoCycle="@autocycle" TData="object">
 
-<br />
-<MudText Typo="Typo.h5" GutterBottom="true">What's New in Blazor with the Release of .NET 9</MudText>
-<br />
+            <!-- Carousel Item 1 -->
+            <MudCarouselItem Transition="transition">
+                <div class="relative flex h-full w-full overflow-hidden rounded-lg bg-black p-8 text-white">
+                    <div class="z-10 flex w-1/2 flex-col justify-center gap-2">
+                        <div class="mx-auto mb-4 flex items-center">
+                            <MudIcon Icon="@Icons.Custom.Brands.Apple" Class="mr-2 text-2xl" />
+                            <span class="text-lg">iPhone 14 Series</span>
+                        </div>
+                        <h2 class="mx-auto mb-4 text-4xl leading-tight font-bold">
+                            Up to 10%<br />off Voucher
+                        </h2>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" Class="text-white normal-case underline">
+                            Shop Now →
+                        </MudButton>
+                    </div>
+                    <div class="absolute inset-y-0 right-0 w-1/2">
+                        <img src="./images/iphone.png" alt="iPhone" class="h-full w-full object-cover opacity-80" />
+                    </div>
+                </div>
+            </MudCarouselItem>
 
-<MudText Typo="Typo.h6" GutterBottom="true">Prerendering</MudText>
-<MudText Typo="Typo.body2" GutterBottom="true">
-    If you're exploring the features of .NET 9 Blazor,<br /> you might be pleasantly surprised to learn that each page is prerendered on the server,<br /> regardless of the selected render mode.<br /><br />
-    This means that you'll need to inject all necessary services on the server,<br /> even when opting for the wasm (WebAssembly) render mode.<br /><br />
-    This prerendering functionality is crucial to ensuring that WebAssembly mode feels fast and responsive,<br /> especially when it comes to initial page load times.<br /><br />
-    For more information on how to detect prerendering and leverage the RenderContext, you can refer to the following link:
-    <MudLink Href="https://github.com/dotnet/aspnetcore/issues/51468#issuecomment-1783568121" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        More details
-    </MudLink>
-</MudText>
+            <!-- Carousel Item 2 (Duplicate Content) -->
+            <MudCarouselItem Transition="transition">
+                <div class="relative flex h-full w-full overflow-hidden rounded-lg bg-black p-8 text-white">
+                    <div class="z-10 flex w-1/2 flex-col justify-center gap-2">
+                        <div class="mx-auto mb-4 flex items-center">
+                            <MudIcon Icon="@Icons.Custom.Brands.Apple" Class="mr-2 text-2xl" />
+                            <span class="text-lg">iPhone 14 Series</span>
+                        </div>
+                        <h2 class="mx-auto mb-4 text-4xl leading-tight font-bold">
+                            Up to 10%<br />off Voucher
+                        </h2>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" Class="text-white normal-case underline"  Style="color:white">
+                            Shop Now →
+                        </MudButton>
+                    </div>
+                    <div class="absolute inset-y-0 right-0 w-1/2">
+                        <img src="./images/iphone.png" alt="iPhone" class="h-full w-full object-cover opacity-80" />
+                    </div>
+                </div>
+            </MudCarouselItem>
 
-<br />
-<MudText Typo="Typo.h6" GutterBottom="true">InteractiveAuto</MudText>
-<MudText Typo="Typo.body2">
-    A discussion on how to achieve this can be found here:
-    <MudLink Href="https://github.com/dotnet/aspnetcore/issues/51468#issue-1950424116" Target="_blank" Typo="Typo.body2" Color="Color.Primary">
-        More details
-    </MudLink>
-</MudText>
+        </MudCarousel>
+
+    </div>
+</section>
+
+<section class="font-inter mt-10 w-full">
+    <!-- Flash Sales Section -->
+ 
+        <div class="mb-10 flex flex-col items-start justify-evenly gap-2">
+            <div class="ml-4 flex h-14 items-center">
+                <div class="mr-2 h-6 w-2 bg-[#DB4444]"></div>
+                <MudText Style="color:#DB4444">Today's</MudText>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <h3 class="mr-10 text-2xl font-bold">Flash Sales</h3>
+                    <div class="flex items-center justify-between">
+                        <span class="pr-4 font-semibold">Ends In:</span>
+                        <div class="flex items-center justify-evenly gap-3">
+                            <!-- Increased gap size -->
+                            <div class="rounded bg-black px-2 py-1 text-white">03</div>
+                            <span class="text-black">:</span> <!-- Explicit text color -->
+                            <div class="rounded bg-black px-2 py-1 text-white">23</div>
+                            <span class="text-black">:</span>
+                            <div class="rounded bg-black px-2 py-1 text-white">19</div>
+                            <span class="text-black">:</span>
+                            <div class="rounded bg-black px-2 py-1 text-white">56</div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" />
+                    <MudIconButton Icon="@Icons.Material.Filled.ArrowForward" />
+                </div>
+                
+            </div>
+        </div>
+
+        <MudGrid Justify="Justify.FlexStart">
+            <MudItem xs="12" sm="6" md="3" Class="flex justify-center">
+                <MudCard Class="w-full cursor-pointer">
+                    <MudCardMedia Image="./images/gridImage.png"
+                                  Class="h-48" 
+                                  Height="192" 
+                                  Title="AK-900 Wired Keyboard"
+                                  Style="object-fit: contain; background-size: contain;" />
+                    <MudCardContent>
+                        <h4 class="font-semibold">HAVIT HV-G92 Gamepad</h4>
+                        <p class="font-bold text-red-500">$120 <span class="text-gray-400 line-through">$160</span></p>
+                        <p class="text-yellow-500">★★★★★ (88)</p>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Default"
+                                   Style="background-color:#DB4444;color:white"
+                                   Class="mt-2 w-full">
+                            Add To Cart
+                        </MudButton>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3" Class="flex justify-center">
+                <MudCard Class="w-full cursor-pointer">
+                    <MudCardMedia Image="./images/gridImage.png"
+                                  Class="h-48"
+                                  Height="192"
+                                  Title="AK-900 Wired Keyboard"
+                                  Style="object-fit: contain; background-size: contain;" />
+
+                    <MudCardContent>
+                        <h4 class="font-semibold">AK-900 Wired Keyboard</h4>
+                        <p class="font-bold text-red-500">$960 <span class="text-gray-400 line-through">$1160</span></p>
+                        <p class="text-yellow-500">★★★★☆ (75)</p>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Default"
+                                   Style="background-color:#DB4444;color:white"
+                                   Class="mt-2 w-full">
+                            Add To Cart
+                        </MudButton>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3" Class="max-w-[120px]">
+                <MudCard>
+                    <MudCardMedia Image="./images/gridImage.png"
+                                  Class="h-48"
+                                  Height="192"
+                                  Title="AK-900 Wired Keyboard"
+                                  Style="object-fit: contain; background-size: contain;" />
+                    <MudCardContent>
+                        <h4 class="font-semibold">IPS LCD Gaming Monitor</h4>
+                        <p class="font-bold text-red-500">$370 <span class="text-gray-400 line-through">$400</span></p>
+                        <p class="text-yellow-500">★★★★☆ (99)</p>
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Default"
+                                   Style="background-color:#DB4444;color:white"
+                                   Class="mt-2 w-full">
+                            Add To Cart
+                        </MudButton>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" sm="6" md="3" Class="max-w-[120px]">
+                <MudCard>
+                    <MudCardMedia Image="./images/gridImage.png"
+                                  Class="h-48"
+                                  Height="192"
+                                  Title="AK-900 Wired Keyboard"
+                                  Style="object-fit: contain; background-size: contain;" />
+                    <MudCardContent>
+                        <h4 class="font-semibold">Wireless HeadPhones</h4>
+                        <p class="font-bold text-red-500">$375 <span class="text-gray-400 line-through">$400</span></p>
+                        <p class="text-yellow-500">★★★★☆ (40)</p>
+                        <MudButton Variant="Variant.Filled" 
+                                            Color="Color.Default"
+                                            Style="background-color:#DB4444;color:white"
+                                            Class="mt-2 w-full">Add To Cart
+                        </MudButton>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <div class="mx-auto mt-10 flex w-1/3 justify-center p-4">
+            <MudLink Href="#" Underline="Underline.None"
+                              Color="Color.Default"
+                              Class="inline-block rounded px-6 py-3 hover:bg-secondaryButton/15"
+                              Style="background-color:#DB4444;color:white">
+                View All Hot Sales
+            </MudLink>
+        </div>
+    
+</section>
+
+
+<section class="font-inter mt-10 w-full px-4">
+    
+    <div class="mb-6 flex items-center justify-between">
+        <div class="flex h-10 items-center">
+            <div class="mr-2 h-6 w-2 bg-[#DB4444]"></div>
+            <span class="text-sm font-medium text-[#DB4444]">Categories</span>
+        </div>
+
+        <div class="flex space-x-2">
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" />
+            <MudIconButton Icon="@Icons.Material.Filled.ArrowForward"/>
+        </div>
+    </div>
+
+    <h2 class="mb-6 text-2xl font-bold text-gray-900">Browse By Category</h2>
+
+    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-6">
+        
+        @foreach(var category in Categories)
+        {
+            <MudPaper Class="flex min-h-36 cursor-pointer flex-col items-center justify-center p-4 transition-colors duration-200 hover:bg-gray-100"
+                      OnClick="@(() => SelectCategory(category.Id))"
+                      Style="border: 1px solid #e5e7eb; border-radius: 0.375rem;">
+                <MudIcon Icon="@GetCategoryIcon(category.Slug)" Size="Size.Large" Class="mb-2 text-gray-700" />
+                <span class="text-sm font-medium text-gray-900">@category.Name</span>
+            </MudPaper>
+        }
+
+    </div>
+</section>
+
+<section class="mt-10 w-full font-sans">
+    <div class="p-6">
+        <div class="mb-4 flex items-center justify-between">
+            <div class="ml-4 flex h-10 items-center">
+                <div class="mr-2 h-6 w-2 bg-[#DB4444]"></div>
+                <span class="text-sm font-medium text-[#DB4444]">This Month</span>
+            </div>
+            <MudButton Color="Color.Error" Variant="Variant.Filled" Class="rounded px-4 py-2">View All</MudButton>
+        </div>
+
+        <h2 class="mb-6 text-2xl font-bold text-gray-900">Best Selling Products</h2>
+
+        <MudGrid Gutter="GutterSize.Small" Justify="Justify.FlexStart">
+            @foreach(var product in Products )
+            {
+                <MudItem xs="12" sm="6" md="3" Class="relative flex justify-center" onclick="">
+                    <MudCard Class="w-full cursor-pointer">
+
+                        <MudCardMedia Image="@(product.ImageUrl ?? product.ImagePath ?? "./images/gridImage.png")"
+                                      Class="h-48"
+                                      Height="192"
+                                      Title="@product.Name"
+                                      Style="object-fit: contain; background-size: contain;" />
+                        <div class="absolute top-2 right-0 flex flex-col gap-1">
+                            <MudIconButton Icon="@Icons.Material.Filled.FavoriteBorder" Color="Color.Default" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Default" />
+                        </div>
+                        <MudCardContent>
+                            <h4 class="font-semibold">@product.Name</h4>
+                            <p class="font-bold text-red-500">$@product.Price <span class="text-gray-400 line-through">$@(product.Price * 1.3m)</span></p>
+                            <p class="text-yellow-500">★★★★★ (88)</p>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+
+
+        </MudGrid>
+    </div>
+</section>
+
+<!-- Music Experience Promo Section -->
+<section class="font-inter mt-14 h-100 w-full bg-black px-6">
+    <div class="justify-centre relative m-2 flex flex-col items-center rounded bg-black p-10 text-white md:flex-row">
+
+        <!-- Left Text Content -->
+        <div class="mb-6 flex flex-col justify-center md:mb-0 md:w-1/2">
+            <p class="mb-2 text-center font-medium text-green-500">Categories</p>
+            <h2 class="mb-4 text-center text-3xl font-bold md:text-4xl">Enhance Your <br /> Music Experience</h2>
+            <div class="mb-6 flex justify-center gap-3">
+                <div class="flex h-16 w-16 flex-col items-center justify-center rounded-full bg-white text-black">
+                    <span class="text-xl font-bold">23</span>
+                    <span class="text-xs">Hours</span>
+                </div>
+                <div class="flex h-16 w-16 flex-col items-center justify-center rounded-full bg-white text-black">
+                    <span class="text-xl font-bold">05</span>
+                    <span class="text-xs">Days</span>
+                </div>
+                <div class="flex h-16 w-16 flex-col items-center justify-center rounded-full bg-white text-black">
+                    <span class="text-xl font-bold">59</span>
+                    <span class="text-xs">Minutes</span>
+                </div>
+                <div class="flex h-16 w-16 flex-col items-center justify-center rounded-full bg-white text-black">
+                    <span class="text-xl font-bold">35</span>
+                    <span class="text-xs">Seconds</span>
+                </div>
+            </div>
+            <MudButton Color="Color.Success" Variant="Variant.Filled" Class="mx-auto w-1/2 rounded px-6 py-2">Buy Now!</MudButton>
+        </div>
+
+        <!-- Product Image -->
+        <div class="flex justify-center md:w-1/2">
+            <img src="./images/jbl.png" alt="JBL Speaker" class="h-60 object-contain md:h-100" />
+        </div>
+    </div>
+</section>
+
+
+@code {
+
+    //MudCarousel control variables
+    private bool arrows = true;
+    private bool bullets = true;
+    private bool enableSwipeGesture = true;
+    private bool autocycle = true;
+    private Transition transition = Transition.Slide;
+
+    //categories
+    private int SelectedCategoryIndex = 0;
+    private List<Category> Categories = new();
+
+    //Products
+    public List<Product> Products = new();
+
+    private string? currentUrl;
+
+    protected override void OnInitialized()
+    {
+        // Initialize categories
+        Categories = new List<Category>
+        {
+            new Category{Id = 1, Name="iphones",Slug="smartphone"},
+            new Category{Id = 2, Name="computers",Slug="computer"},
+            new Category{Id = 3, Name="SmartWatch",Slug="watch"},
+            new Category{Id = 4, Name="Camera",Slug="camera"},
+            new Category{Id = 5, Name="Headphones",Slug="headphones"},
+            new Category{Id = 6, Name="Gaming",Slug="gaming"},
+        };
+
+        Products = new List<Product>
+        {
+            new Product{Id = 1, Name="product1", ImagePath="./images/gridImage.png",Price=500},
+            new Product{Id = 2, Name="product2", ImagePath="./images/gridImage.png",Price=500},
+            new Product{Id = 3, Name="product3", ImagePath="./images/gridImage.png",Price=500},
+            new Product{Id = 4, Name="product4", ImagePath="./images/gridImage.png",Price=500},
+        };
+
+        SelectedCategoryIndex = 4; // Default selected category
+    }
+
+    private void SelectCategory(int categoryId)
+    {
+        SelectedCategoryIndex = categoryId;
+    }
+
+    private String GetCategoryIcon(String slug)
+    {
+        return slug switch
+        {
+            "smartphone" => Icons.Material.Filled.Smartphone,
+            "computer" => Icons.Material.Filled.Computer,
+            "watch" => Icons.Material.Filled.Watch,
+            "camera" => Icons.Material.Filled.PhotoCamera,
+            "headphones" => Icons.Material.Filled.Headphones,
+            "gaming" => Icons.Material.Filled.Gamepad,
+            _ => Icons.Material.Filled.Category
+        };
+    }
+
+    /*private void OnLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }*/
+}

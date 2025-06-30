@@ -38,25 +38,25 @@
         <MudLayout>
             <!-- Responsive AppBar -->
             <MudAppBar Elevation="1" Color="Color.Success" Class="h-14">
-                <div class="flex w-full items-center justify-between md:px-4">
+                <div class="font-inter flex w-full items-center justify-between text-lg text-black md:px-4">
                     <!-- Left Section: hamburger + brand -->
                     <div class="flex items-center space-x-2">
                         <!-- Hamburger: only on small screens -->
                         <MudIconButton Icon="@Icons.Material.Filled.Menu"
                                        Color="Color.Inherit"
                                        AriaLabel="Open navigation menu"
-                                       Class="text-white md:hidden"
+                                       Class="font-inter text-white md:hidden"
                                        OnClick="@ToggleDrawer" />
                         <!-- Mobile logo: B.E. (visible on small screens) -->
                         <MudNavLink Href="/" Match="NavLinkMatch.All" Class="md:hidden">
-                            <MudText Typo="Typo.h6" Class="cursor-pointer font-bold text-white">
+                            <MudText Typo="Typo.h6" Class="font-inter cursor-pointer font-bold text-black">
                                 B.E.
                             </MudText>
                         </MudNavLink>
 
                         <!-- Desktop logo: Full text (visible on medium and up) -->
                         <MudNavLink Href="/" Match="NavLinkMatch.All" Class="hidden md:inline">
-                            <MudText Typo="Typo.h6" Class="hidden cursor-pointer font-bold text-white">
+                            <MudText Typo="Typo.h6" Class="hidden cursor-pointer font-bold text-black">
                                 BLAZORED ELECTRONICS
                             </MudText>
                         </MudNavLink>
@@ -64,18 +64,18 @@
                     </div>
 
                     <!-- Center Section: desktop nav links (hidden on small) -->
-                    <div class="hidden space-x-4 md:flex">
+                    <div class="font-inter hidden space-x-4 md:flex">
                         <MudNavLink Href="/" Match="NavLinkMatch.All"
-                                    Class="text-white transition-colors hover:text-gray-200">
+                                    Class="text-xlg font-sans text-black transition-colors hover:text-gray-200">
                             Home
                         </MudNavLink>
-                        <MudNavLink Href="/contact" Class="text-white transition-colors hover:text-gray-200">
+                        <MudNavLink Href="/contact" Class="text-black transition-colors hover:text-gray-200">
                             Contact
                         </MudNavLink>
-                        <MudNavLink Href="/about" Class="text-white transition-colors hover:text-gray-200">
+                        <MudNavLink Href="/about" Class="text-black transition-colors hover:text-gray-200">
                             About
                         </MudNavLink>
-                        <MudNavLink Href="/account/register" Class="text-white transition-colors hover:text-gray-200">
+                        <MudNavLink Href="/account/register" Class="text-black transition-colors hover:text-gray-200">
                             Signup
                         </MudNavLink>
                     </div>
@@ -84,13 +84,13 @@
                     <div class="flex items-center space-x-4">
                         <MudIconButton Icon="@Icons.Material.Filled.Search"
                                        Color="Color.Inherit"
-                                       Class="text-white"
+                                       Class="text-black"
                                        AriaLabel="Search" />
                         <AuthorizeView>
                             <Authorized>
                                 <MudNavLink Href="Account/Manage" Icon="@Icons.Material.Filled.Person"
-                                            IconColor="Color.Inherit" Class="text-white">
-                                    <p class="hidden md:inline">@userName</p>
+                                            IconColor="Color.Inherit" Class="text-black">
+                                    <p class="hidden md:inline">@userName?.Split('@')[0]</p>
                                 </MudNavLink>
                                 <form action="Account/Logout" method="post">
                                     <AntiforgeryToken />
@@ -156,9 +156,10 @@
                 </MudNavMenu>
             </MudDrawer>
 
-            <MudMainContent Class="pa-4 pt-16 transition-all duration-300">
+            <MudMainContent Class="pt-16 transition-all duration-300">
                 @Body
             </MudMainContent>
+            <Footer />
         </MudLayout>
     }
 </BaseLayout>
