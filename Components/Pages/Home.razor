@@ -13,13 +13,13 @@
         <div class="rounded-lg bg-white p-4 shadow-sm">
             <h3 class="mb-4 font-semibold text-gray-800">Shop by Category</h3>
             <nav class="space-y-2">
-                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Woman's Fashion</MudLink>
-                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Men's Fashion</MudLink>
-                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Electronics</MudLink>
-                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Home & Lifestyle</MudLink>
+                <MudLink Href="/products/Phones" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Phones</MudLink>
+                <MudLink Href="/products/Computers" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Laptops and TV's</MudLink>
+                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Watches</MudLink>
+                <MudLink Href="/products/Home Appliances" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Home Appliances</MudLink>
                 <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Medicine</MudLink>
-                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Sports & Outdoor</MudLink>
-                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Baby's & Toys</MudLink>
+                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Sports & Outdoor Electronics</MudLink>
+                <MudLink Href="/products/Kids Electronics" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Kids Electronics</MudLink>
                 <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Groceries & Pets</MudLink>
                 <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Health & Beauty</MudLink>
             </nav>
@@ -32,7 +32,7 @@
 
             <!-- Carousel Item 1 -->
             <MudCarouselItem Transition="transition">
-                <div class="relative flex h-full w-full overflow-hidden rounded-lg bg-black p-8 text-white">
+                <div class="relative flex h-full w-full overflow-hidden md:rounded-lg bg-black p-8 text-white">
                     <div class="z-10 flex w-1/2 flex-col justify-center gap-2">
                         <div class="mx-auto mb-4 flex items-center">
                             <MudIcon Icon="@Icons.Custom.Brands.Apple" Class="mr-2 text-2xl" />
@@ -80,36 +80,46 @@
 <section class="font-inter mt-10 w-full">
     <!-- Flash Sales Section -->
  
-        <div class="mb-10 flex flex-col items-start justify-evenly gap-2">
-            <div class="ml-4 flex h-14 items-center">
+        <div class="mb-10 flex flex-col gap-4"> <!-- Outer container - column layout -->
+    <!-- First row - Today's label -->
+            <div class="flex items-center">
                 <div class="mr-2 h-6 w-2 bg-[#DB4444]"></div>
-                <MudText Style="color:#DB4444">Today's</MudText>
+                <MudText Typo="Typo.h6" Style="color:#DB4444" Class="font-semibold text-c">Today's</MudText>
             </div>
 
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <h3 class="mr-10 text-2xl font-bold">Flash Sales</h3>
-                    <div class="flex items-center justify-between">
-                        <span class="pr-4 font-semibold">Ends In:</span>
-                        <div class="flex items-center justify-evenly gap-3">
-                            <!-- Increased gap size -->
-                            <div class="rounded bg-black px-2 py-1 text-white">03</div>
-                            <span class="text-black">:</span> <!-- Explicit text color -->
-                            <div class="rounded bg-black px-2 py-1 text-white">23</div>
-                            <span class="text-black">:</span>
-                            <div class="rounded bg-black px-2 py-1 text-white">19</div>
-                            <span class="text-black">:</span>
-                            <div class="rounded bg-black px-2 py-1 text-white">56</div>
-                        </div>
-                    </div>
+            <!-- Second row - Flash sales content -->
+            <div class="flex w-full flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+                <!-- Left section - Flash sales text and timer -->
+                <div class="flex flex-col gap-2 md:flex-row md:items-center md:gap-6">
+                    <h3 class="text-xl font-bold md:text-2xl">Flash Sales</h3>
+                <div class="flex items-center">
+                <span class="pr-2 font-semibold md:pr-4">Ends In:</span>
+                <div class="flex items-center gap-2 md:gap-3">
+                    <div class="rounded bg-black px-2 py-1 text-sm text-white md:text-base">03</div>
+                    <span class="text-black">:</span>
+                    <div class="rounded bg-black px-2 py-1 text-sm text-white md:text-base">23</div>
+                    <span class="text-black">:</span>
+                    <div class="rounded bg-black px-2 py-1 text-sm text-white md:text-base">19</div>
+                    <span class="text-black">:</span>
+                    <div class="rounded bg-black px-2 py-1 text-sm text-white md:text-base">56</div>
                 </div>
-                <div>
-                    <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" />
-                    <MudIconButton Icon="@Icons.Material.Filled.ArrowForward" />
-                </div>
-                
             </div>
         </div>
+
+        <!-- Right section - Arrows (aligned to right edge) -->
+        <div class="flex w-full justify-end md:w-auto">
+            <div class="flex gap-2">
+                <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" 
+                               Class="text-black hover:bg-gray-100" 
+                               Size="Size.Small" />
+                <MudIconButton Icon="@Icons.Material.Filled.ArrowForward" 
+                               Class="text-black hover:bg-gray-100" 
+                               Size="Size.Small" />
+            </div>
+        </div>
+    </div>
+</div>
+        
 
         <MudGrid Justify="Justify.FlexStart">
             <MudItem xs="12" sm="6" md="3" Class="flex justify-center">
@@ -247,7 +257,7 @@
                 <div class="mr-2 h-6 w-2 bg-[#DB4444]"></div>
                 <span class="text-sm font-medium text-[#DB4444]">This Month</span>
             </div>
-            <MudButton Color="Color.Error" Variant="Variant.Filled" Class="rounded px-4 py-2">View All</MudButton>
+            <MudButton Color="Color.Error" Variant="Variant.Filled" Class="rounded px-4 py-2" OnClick="@(()=> NavigationManager.NavigateTo("/products") )">View All</MudButton>
         </div>
 
         <h2 class="mb-6 text-2xl font-bold text-gray-900">Best Selling Products</h2>

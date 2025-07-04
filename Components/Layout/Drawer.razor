@@ -1,0 +1,49 @@
+@using Components.Layout
+@using Microsoft.AspNetCore.Components.Authorization
+
+<MudDrawer Open="@Open"
+               Variant="@DrawerVariant.Responsive"
+               Anchor="Anchor.Left"
+               Elevation="1"
+               Class="mud-theme-default"
+               
+               Style="z-index: 1200;">
+
+        <MudNavMenu>
+            <MudNavLink Href="/" Match="NavLinkMatch.All">Home</MudNavLink>
+            <MudNavLink Href="/contact">Contact</MudNavLink>
+            <MudNavLink Href="/about">About</MudNavLink>
+            <MudNavLink Href="/account/register">Signup</MudNavLink>
+
+            @if (isAuthenticated)
+            {
+                <MudNavLink Href="Account/Manage" Icon="@Icons.Material.Filled.Person">Profile</MudNavLink>
+                <div class="relative">
+                    <MudIconButton Href="/cart" Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Medium">My cart</MudIconButton>
+                    
+                </div>
+                <form action="Account/Logout" method="post">
+                    <AntiforgeryToken />
+                    <input type="hidden" name="ReturnUrl" value="@CurrentUrl" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Logout"
+                                   Color="Color.Inherit"
+                                   Class="text-white"
+                                   ButtonType="ButtonType.Submit"
+                                   AriaLabel="Logout" />
+                </form>
+            }
+            else
+            {
+                <MudNavLink Href="/account/login" Icon="@Icons.Material.Filled.Lock">Login</MudNavLink>
+            }
+        </MudNavMenu>
+</MudDrawer>
+
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter] public bool isAuthenticated { get; set; }
+    [Parameter] public string? CurrentUrl { get; set; }
+
+}

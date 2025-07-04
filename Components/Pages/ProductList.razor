@@ -1,0 +1,86 @@
+﻿@page "/products"
+@page "/products/{Category}"
+@using ECommerceMudblazorWebApp.Data.Models
+@using ECommerceMudblazorWebApp.Services
+@inject ICartService CartService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Products</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+
+    <MudText Typo="Typo.h4" Class="mb-4 font-bold">
+        @(GetPrimaryCategory(Products.FirstOrDefault()) ?? "All Products")
+    </MudText>
+
+    <MudGrid Gutter="Size.Small" Justify="Justify.FlexStart">
+        @foreach (var product in DisplayedProducts)
+        {
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudCard Class="flex h-full flex-col justify-between p-4 shadow-xl">
+                    <MudCardMedia Image="@product.ImageUrl" Height="140" />
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="font-semibold">@product.Name</MudText>
+                        <MudText Class="text-gray-500">@GetPrimaryCategory(product)</MudText>
+                        <MudText Typo="Typo.subtitle1" Class="mt-2 font-bold">Ksh @product.Price</MudText>
+                    </MudCardContent>
+                    <MudCardActions Class="mt-4">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => AddToCart(product)">
+                            Add to Cart
+                        </MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+</MudContainer>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? Category { get; set; }
+
+    private List<Product> Products = new();
+    private List<Product> DisplayedProducts => string.IsNullOrEmpty(Category) || Category == "All"
+        ? Products
+        : Products.Where(p => p.ProductCategories.Any(pc => pc.Category.Name.Equals(Category, StringComparison.OrdinalIgnoreCase))).ToList();
+
+    protected override async Task OnInitializedAsync()
+    { 
+        // Simulate fetching products from a service or database
+        Products = await Task.FromResult(new List<Product>
+        {
+            new Product { Id = 1, Name = "havier gaming console", Price = 100, ImageUrl = "https://placehold.co/400", ImagePath = "/images/gridImage.jpg", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Electronics" } } } },
+            new Product { Id = 2, Name = "gridge phone", Price = 200, ImageUrl = "https://via.placeholder.com/150", ImagePath = "/images/gridImage.jpg", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Computers" } } } },
+            new Product { Id = 3, Name = "samasung phone", Price = 150, ImageUrl = "/images/gamingpc.jpg", ImagePath = "/images/gridImage.jpg", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Kids Electronics" } } } },
+            new Product { Id = 4, Name = "Product 4", Price = 250, ImageUrl = "https://via.placeholder.com/150", ImagePath = "/images/gridImage.jpg", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Home Appliances" } } } },
+            new Product { Id = 5, Name = "Product 5", Price = 300, ImageUrl = "https://via.placeholder.com/150", ImagePath = "/images/gridImage.jpg", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Electronics" } } } },
+            // Add more products as needed
+        });
+    }
+    protected override void OnParametersSet()
+    {
+        if (string.IsNullOrEmpty(Category))
+        {
+            Category = "All";
+        }
+    }
+
+    string? GetPrimaryCategory(Product product)
+    {
+        return product.ProductCategories.FirstOrDefault()?.Category?.Name ?? "Uncategorized";
+    }
+
+    private void AddToCart(Product product)
+    {
+        CartService.AddToCart(new CartItem
+        {
+            ProductId = product.Id,
+            Product = product,
+            Quantity = 1
+        });
+
+        NavigationManager.NavigateTo("/cart");
+    }
+
+}

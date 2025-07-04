@@ -1,24 +1,32 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+
 namespace ECommerceMudblazorWebApp.Data.Models
 {
     public class Order
     {
+        [Key]
         public int Id { get; set; }
 
         [Required]
+        [StringLength(450)]
         public string UserId { get; set; }
 
-        [ForeignKey("UserId")]
+        [ForeignKey(nameof(UserId))]
         public ApplicationUser User { get; set; }
 
+        [Required]
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
 
         [Required]
         public OrderStatus Status { get; set; }
 
+        [Required]
+        [StringLength(500)]
         public string ShippingAddress { get; set; }
 
+        [Required]
+        [StringLength(100)]
         public string PaymentMethod { get; set; }
 
         // Navigation to order items

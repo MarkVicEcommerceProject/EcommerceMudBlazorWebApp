@@ -1,0 +1,98 @@
+﻿@using ECommerceMudblazorWebApp.Services
+@using MudBlazor
+@inject NavigationManager NavigationManager
+@inject ICartService CartService
+
+<MudAppBar Elevation="1" Color="Color.Success" Class="h-14">
+    <div class="font-inter flex w-full items-center justify-between text-lg text-black md:px-4">
+        <!-- Left Section: hamburger + brand -->
+        <div class="flex items-center space-x-2">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                           Color="Color.Inherit"
+                           AriaLabel="Open navigation menu"
+                           Class="font-inter text-white block md:hidden"
+                           OnClick="ToggleDrawerCallback" />
+            <!-- Mobile logo: B.E. (visible on small screens) -->
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Class="md:hidden">
+                <MudText Typo="Typo.h6" Class="font-inter cursor-pointer font-bold text-black">
+                    B.E.
+                </MudText>
+            </MudNavLink>
+
+            <!-- Desktop logo: Full text (visible on medium and up) -->
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Class="hidden md:inline">
+                <MudText Typo="Typo.h6" Class="hidden cursor-pointer font-bold text-black">
+                    BLAZORED ELECTRONICS
+                </MudText>
+            </MudNavLink>
+
+        </div>
+
+        <!-- Center Section: desktop nav links (hidden on small) -->
+        <div class="font-inter hidden space-x-4 md:flex">
+            <MudNavLink Href="/" Match="NavLinkMatch.All"
+                        Class="text-xlg font-sans text-black transition-colors hover:text-gray-200">
+                Home
+            </MudNavLink>
+            <MudNavLink Href="/contact" Class="text-black transition-colors hover:text-gray-200">
+                Contact
+            </MudNavLink>
+            <MudNavLink Href="/about" Class="text-black transition-colors hover:text-gray-200">
+                About
+            </MudNavLink>
+            <MudNavLink Href="/account/register" Class="text-black transition-colors hover:text-gray-200">
+                Signup
+            </MudNavLink>
+        </div>
+
+        <!-- Right Section: auth/search (always visible) -->
+        <div class="flex items-center space-x-4">
+            <MudIconButton Icon="@Icons.Material.Filled.Search"
+                           Color="Color.Inherit"
+                           Class="text-black"
+                           AriaLabel="Search" />
+            <AuthorizeView>
+                <Authorized>
+                    <MudNavLink Href="Account/Manage" Icon="@Icons.Material.Filled.Person"
+                                IconColor="Color.Inherit" Class="text-black">
+                        <p class="hidden md:inline">@UserName?.Split('@')[0]</p>
+                    </MudNavLink>
+
+                    <MudBadge Content="@(CartService.GetCartItemCount())" Color="Color.Primary" Overlap="true">
+                        <MudIconButton Href="/cart" Icon="@Icons.Material.Filled.ShoppingCart"
+                                        Size="Size.Medium" Class="text-black" />
+                    </MudBadge>
+                    
+                    <form action="Account/Logout" method="post">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="ReturnUrl" value="@CurrentUrl" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Logout"
+                                       Color="Color.Warning"
+                                       Class="text-white"
+                                       ButtonType="ButtonType.Submit"
+                                       AriaLabel="Logout" />
+                    </form>
+                    
+                </Authorized>
+                <NotAuthorized>
+                    <MudNavLink Href="/account/login" Icon="@Icons.Material.Filled.Lock"
+                                IconColor="Color.Inherit" Class="text-white">
+                        Login
+                    </MudNavLink>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</MudAppBar>
+@code {
+    [Parameter] public bool IsAuthenticated { get; set; }
+    [Parameter] public string? UserName { get; set; }
+    [Parameter] public string? CurrentUrl { get; set; }
+    [Parameter] public EventCallback ToggleDrawerCallback { get; set; }
+
+
+    private void ToggleDrawer() => ToggleDrawerCallback.InvokeAsync();
+}
+using ECommerceMudblazorWebApp.Services;
+#line default
+#line hidden

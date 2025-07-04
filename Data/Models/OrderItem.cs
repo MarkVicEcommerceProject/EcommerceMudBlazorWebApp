@@ -5,6 +5,7 @@ namespace ECommerceMudblazorWebApp.Data.Models
 {
     public class OrderItem
     {
+        [Key]
         public int Id { get; set; }
 
         [Required]
@@ -18,15 +19,13 @@ namespace ECommerceMudblazorWebApp.Data.Models
         public int Quantity { get; set; }
 
         [Required]
-        [Column(TypeName ="decimal(18,2)")]
-        public int UnitPrice { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal UnitPrice { get; set; }
 
-        [Required]
         [ForeignKey("ProductId")]
         public Product Product { get; set; }
 
-        [Required]
         [ForeignKey("OrderId")]
-        public Order Order { get; set; }     
+        public Order Order { get; set; }
     }
 }
