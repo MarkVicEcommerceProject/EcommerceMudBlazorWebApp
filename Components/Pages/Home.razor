@@ -32,7 +32,7 @@
 
             <!-- Carousel Item 1 -->
             <MudCarouselItem Transition="transition">
-                <div class="relative flex h-full w-full overflow-hidden md:rounded-lg bg-black p-8 text-white">
+                <div class="relative flex h-full w-full overflow-hidden bg-black p-8 text-white md:rounded-lg">
                     <div class="z-10 flex w-1/2 flex-col justify-center gap-2">
                         <div class="mx-auto mb-4 flex items-center">
                             <MudIcon Icon="@Icons.Custom.Brands.Apple" Class="mr-2 text-2xl" />
@@ -80,45 +80,45 @@
 <section class="font-inter mt-10 w-full">
     <!-- Flash Sales Section -->
  
-        <div class="mb-10 flex flex-col gap-4"> <!-- Outer container - column layout -->
-    <!-- First row - Today's label -->
-            <div class="flex items-center">
-                <div class="mr-2 h-6 w-2 bg-[#DB4444]"></div>
-                <MudText Typo="Typo.h6" Style="color:#DB4444" Class="font-semibold text-c">Today's</MudText>
-            </div>
+    <div class="mb-10 flex flex-col gap-4">
+        <!-- First row - Today's label -->
+        <div class="flex items-center">
+            <div class="mr-2 h-6 w-2 bg-[#DB4444]"></div>
+            <MudText Typo="Typo.h6" Style="color:#DB4444" Class="text-c font-semibold">Today's</MudText>
+        </div>
 
-            <!-- Second row - Flash sales content -->
-            <div class="flex w-full flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
-                <!-- Left section - Flash sales text and timer -->
-                <div class="flex flex-col gap-2 md:flex-row md:items-center md:gap-6">
-                    <h3 class="text-xl font-bold md:text-2xl">Flash Sales</h3>
+        <!-- Second row - Flash sales content -->
+        <div class="flex w-full flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
+            <!-- Left section - Flash sales text and timer -->
+            <div class="flex flex-col gap-2 md:flex-row md:items-center md:gap-6 md:justify-between">
+                <h3 class="text-xl font-bold md:text-2xl">Flash Sales</h3>
+
                 <div class="flex items-center">
-                <span class="pr-2 font-semibold md:pr-4">Ends In:</span>
-                <div class="flex items-center gap-2 md:gap-3">
-                    <div class="rounded bg-black px-2 py-1 text-sm text-white md:text-base">03</div>
-                    <span class="text-black">:</span>
-                    <div class="rounded bg-black px-2 py-1 text-sm text-white md:text-base">23</div>
-                    <span class="text-black">:</span>
-                    <div class="rounded bg-black px-2 py-1 text-sm text-white md:text-base">19</div>
-                    <span class="text-black">:</span>
-                    <div class="rounded bg-black px-2 py-1 text-sm text-white md:text-base">56</div>
+                    <span class="pr-2 font-semibold md:pr-4">Ends In:</span>
+                    <div class="flex items-center gap-2 md:gap-3">
+                        <div class="rounded bg-black px-2 py-1 text-sm text-white md:text-base">03</div>
+                        <span class="text-black">:</span>
+                        <div class="rounded bg-black px-2 py-1 text-sm text-white md:text-base">23</div>
+                        <span class="text-black">:</span>
+                        <div class="rounded bg-black px-2 py-1 text-sm text-white md:text-base">19</div>
+                        <span class="text-black">:</span>
+                        <div class="rounded bg-black px-2 py-1 text-sm text-white md:text-base">56</div>
+                    </div>
+                </div>
+            </div> <!-- ✅ closing the left section properly -->
+
+            <!-- Right section - Arrows -->
+            <div class="flex w-full justify-end md:w-auto">
+                <div class="flex gap-2">
+                    <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Class="text-black hover:bg-gray-100"
+                        Size="Size.Small" />
+                    <MudIconButton Icon="@Icons.Material.Filled.ArrowForward" Class="text-black hover:bg-gray-100"
+                        Size="Size.Small" />
                 </div>
             </div>
         </div>
-
-        <!-- Right section - Arrows (aligned to right edge) -->
-        <div class="flex w-full justify-end md:w-auto">
-            <div class="flex gap-2">
-                <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" 
-                               Class="text-black hover:bg-gray-100" 
-                               Size="Size.Small" />
-                <MudIconButton Icon="@Icons.Material.Filled.ArrowForward" 
-                               Class="text-black hover:bg-gray-100" 
-                               Size="Size.Small" />
-            </div>
-        </div>
     </div>
-</div>
+
         
 
         <MudGrid Justify="Justify.FlexStart">
@@ -292,40 +292,51 @@
 </section>
 
 <!-- Music Experience Promo Section -->
-<section class="font-inter mt-14 h-100 w-full bg-black px-6">
-    <div class="justify-centre relative m-2 flex flex-col items-center rounded bg-black p-10 text-white md:flex-row">
+<section class="font-inter mt-14 bg-black text-white">
+    <div class="max-w-7xl mx-auto px-6 py-12 md:py-16 grid grid-cols-1 gap-10 md:grid-cols-2 items-center">
 
-        <!-- Left Text Content -->
-        <div class="mb-6 flex flex-col justify-center md:mb-0 md:w-1/2">
-            <p class="mb-2 text-center font-medium text-green-500">Categories</p>
-            <h2 class="mb-4 text-center text-3xl font-bold md:text-4xl">Enhance Your <br /> Music Experience</h2>
-            <div class="mb-6 flex justify-center gap-3">
-                <div class="flex h-16 w-16 flex-col items-center justify-center rounded-full bg-white text-black">
+        <!-- Left Text & Countdown -->
+        <div class="space-y-4 text-center md:text-left">
+            <p class="text-green-500 font-medium">Categories</p>
+            <h2 class="text-3xl md:text-4xl font-bold leading-tight">
+                Enhance Your<br />Music Experience
+            </h2>
+
+            <!-- Countdown -->
+            <div class="flex justify-center md:justify-start space-x-3">
+                <div class="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-white text-black">
                     <span class="text-xl font-bold">23</span>
                     <span class="text-xs">Hours</span>
                 </div>
-                <div class="flex h-16 w-16 flex-col items-center justify-center rounded-full bg-white text-black">
+                <div class="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-white text-black">
                     <span class="text-xl font-bold">05</span>
                     <span class="text-xs">Days</span>
                 </div>
-                <div class="flex h-16 w-16 flex-col items-center justify-center rounded-full bg-white text-black">
+                <div class="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-white text-black">
                     <span class="text-xl font-bold">59</span>
                     <span class="text-xs">Minutes</span>
                 </div>
-                <div class="flex h-16 w-16 flex-col items-center justify-center rounded-full bg-white text-black">
+                <div class="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-white text-black">
                     <span class="text-xl font-bold">35</span>
                     <span class="text-xs">Seconds</span>
                 </div>
             </div>
-            <MudButton Color="Color.Success" Variant="Variant.Filled" Class="mx-auto w-1/2 rounded px-6 py-2">Buy Now!</MudButton>
+
+            <!-- Call to Action -->
+            <div class="flex justify-center md:justify-start">
+                <MudButton Color="Color.Success" Variant="Variant.Filled" Class="rounded px-6 py-2">
+                    Buy Now!
+                </MudButton>
+            </div>
         </div>
 
-        <!-- Product Image -->
-        <div class="flex justify-center md:w-1/2">
-            <img src="./images/jbl.png" alt="JBL Speaker" class="h-60 object-contain md:h-100" />
+        <div class="flex justify-center">
+            <img src="./images/jbl.png" alt="JBL Speaker" class="w-full max-w-sm object-contain" />
         </div>
+
     </div>
 </section>
+
 
 
 @code {

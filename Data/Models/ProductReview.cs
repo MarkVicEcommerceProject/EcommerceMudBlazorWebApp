@@ -12,7 +12,7 @@ namespace ECommerceMudblazorWebApp.Data.Models
         public int ProductId { get; set; }
 
         [Required]
-        public int UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
 
         [Required]
         [StringLength(1000)]

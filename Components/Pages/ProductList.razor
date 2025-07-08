@@ -18,7 +18,11 @@
         {
             <MudItem xs="12" sm="6" md="4" lg="3">
                 <MudCard Class="flex h-full flex-col justify-between p-4 shadow-xl">
-                    <MudCardMedia Image="@product.ImageUrl" Height="140" />
+                    <MudCardMedia Image="@product.ImagePath"
+                                  Class="h-48"
+                                  Height="192"
+                                  Title="gaming pc"
+                                  Style="object-fit: contain; background-size: contain;" />
                     <MudCardContent>
                         <MudText Typo="Typo.h6" Class="font-semibold">@product.Name</MudText>
                         <MudText Class="text-gray-500">@GetPrimaryCategory(product)</MudText>
@@ -50,11 +54,11 @@
         // Simulate fetching products from a service or database
         Products = await Task.FromResult(new List<Product>
         {
-            new Product { Id = 1, Name = "havier gaming console", Price = 100, ImageUrl = "https://placehold.co/400", ImagePath = "/images/gridImage.jpg", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Electronics" } } } },
-            new Product { Id = 2, Name = "gridge phone", Price = 200, ImageUrl = "https://via.placeholder.com/150", ImagePath = "/images/gridImage.jpg", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Computers" } } } },
-            new Product { Id = 3, Name = "samasung phone", Price = 150, ImageUrl = "/images/gamingpc.jpg", ImagePath = "/images/gridImage.jpg", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Kids Electronics" } } } },
-            new Product { Id = 4, Name = "Product 4", Price = 250, ImageUrl = "https://via.placeholder.com/150", ImagePath = "/images/gridImage.jpg", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Home Appliances" } } } },
-            new Product { Id = 5, Name = "Product 5", Price = 300, ImageUrl = "https://via.placeholder.com/150", ImagePath = "/images/gridImage.jpg", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Electronics" } } } },
+            new Product { Id = 1, Name = "havier gaming console", Price = 100, ImageUrl = "https://placehold.co/400", ImagePath = "/images/gridImage.png", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Electronics" } } } },
+            new Product { Id = 2, Name = "gridge phone", Price = 200, ImageUrl = "https://via.placeholder.com/150", ImagePath = "/images/gridImage.png", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Computers" } } } },
+            new Product { Id = 3, Name = "samasung phone", Price = 150, ImageUrl = "https://placehold.co/400", ImagePath = "/images/gamingpc.png", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Kids Electronics" } } } },
+            new Product { Id = 4, Name = "Product 4", Price = 250, ImageUrl = "https://via.placeholder.com/150", ImagePath = "/images/gridImage.png", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Home Appliances" } } } },
+            new Product { Id = 5, Name = "Product 5", Price = 300, ImageUrl = "https://via.placeholder.com/150", ImagePath = "/images/gridImage.png", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Electronics" } } } },
             // Add more products as needed
         });
     }

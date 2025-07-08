@@ -96,7 +96,11 @@
 
     private string CurrentRoute => NavigationManager.ToBaseRelativePath(NavigationManager.Uri).ToLower();
     private bool IsAuthPage => CurrentRoute.StartsWith("account/login") ||
-                               CurrentRoute.StartsWith("account/register");
+                            CurrentRoute.StartsWith("account/register") ||
+                            CurrentRoute.StartsWith("account/forgotpassword") ||
+                            CurrentRoute.StartsWith("account/resendemailconfirmation") ||
+                            CurrentRoute.StartsWith("account/confirmemail");
+
 
     protected override async Task OnInitializedAsync()
     {

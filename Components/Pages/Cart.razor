@@ -29,7 +29,7 @@
             </HeaderContent>
             <RowTemplate>
                 <MudTd class="flex items-center gap-4">
-                    <img src="@(context.Product.ImageUrl??context.Product.ImagePath?? "./images/gridImage.png")" alt="@context.Product.Name"
+                    <img src="@(context.Product.ImagePath)" alt="@context.Product.Name"
                         class="h-16 w-16 rounded object-cover" />
                     <MudText>@context.Product.Name</MudText>
                 </MudTd>
@@ -86,7 +86,7 @@
                 <MudText>Ksh @CartService.ShoppingCart.Items.Sum(i => i.Product.Price * i.Quantity)</MudText>
             </div>
 
-            <MudButton Color="Color.Default" Class="mt-4 w-full" Style="background-color: #DB4444;color: white;">
+            <MudButton Href="/checkout" Color="Color.Default" Class="mt-4 w-full" Style="background-color: #DB4444;color: white;">
                 Proceed to Checkout
             </MudButton>
         </div>
