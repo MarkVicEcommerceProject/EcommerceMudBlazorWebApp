@@ -86,9 +86,11 @@
                 <MudText>Ksh @CartService.ShoppingCart.Items.Sum(i => i.Product.Price * i.Quantity)</MudText>
             </div>
 
-            <MudButton Href="/checkout" Color="Color.Default" Class="mt-4 w-full" Style="background-color: #DB4444;color: white;">
+            <MudButton Href="/checkout" Color="Color.Default" Class="@($" {(!CartItems.Any() ? "hidden cursor-not-allowed" : "")} mt-4 w-full")" Style="background-color: #DB4444;color: white;">
                 Proceed to Checkout
             </MudButton>
+
+
         </div>
     </div>
 

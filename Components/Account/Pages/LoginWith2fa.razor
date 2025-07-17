@@ -9,40 +9,74 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<LoginWith2fa> Logger
 
-<PageTitle>Two-factor authentication</PageTitle>
+<PageTitle>Two-Factor Authentication</PageTitle>
 
-<h1>Two-factor authentication</h1>
-<MudDivider />
-<StatusMessage Message="@message" />
-<p>Your login is protected with an authenticator app. Enter your authenticator code below.</p>
-<div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Input" FormName="login-with-2fa" OnValidSubmit="OnValidSubmitAsync" method="post">
-            <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
-            <input type="hidden" name="RememberMe" value="@RememberMe" />
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.TwoFactorCode" id="Input.TwoFactorCode" class="form-control" autocomplete="off" />
-                <label for="Input.TwoFactorCode" class="form-label">Authenticator code</label>
-                <ValidationMessage For="() => Input.TwoFactorCode" class="text-danger" />
-            </div>
-            <div class="checkbox mb-3">
-                <label for="remember-machine" class="form-label">
-                    <InputCheckbox @bind-Value="Input.RememberMachine" />
-                    Remember this machine
-                </label>
-            </div>
-            <div>
-                <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-            </div>
-        </EditForm>
-    </div>
-</div>
-<p>
-    Don't have access to your authenticator device? You can
-    <a class="mud-link mud-primary-text mud-link-underline-hover" href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl">log in with a recovery code</a>.
-</p>
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-10">
+    <MudPaper Class="pa-8" Elevation="10">
+        <MudStack Spacing="4">
+            <!-- Header -->
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.h4" Class="text-center" Color="Color.Primary">Two-Factor Authentication</MudText>
+                <MudDivider Class="my-4" />
+                <MudText Typo="Typo.body1" Class="text-center">Your login is protected with an authenticator app</MudText>
+            </MudStack>
+
+            <!-- Status Message -->
+            @if (!string.IsNullOrEmpty(message))
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Filled">@message</MudAlert>
+            }
+
+            <!-- Form -->
+            <EditForm Model="Input" FormName="login-with-2fa" OnValidSubmit="OnValidSubmitAsync" method="post">
+                <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
+                <input type="hidden" name="RememberMe" value="@RememberMe" />
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <MudStack Spacing="4">
+                    <!-- Authenticator Code Field -->
+                    <MudStaticTextField @bind-Value="Input.TwoFactorCode"
+                                  Label="Authenticator Code"
+                                  Variant="Variant.Outlined"
+                                  Required="true"
+                                  InputType="InputType.Text"
+                                  AdornmentIcon="@Icons.Material.Filled.Lock"
+                                  Adornment="Adornment.Start"
+                                  For="@(() => Input.TwoFactorCode)"
+                                  Class="mt-4" />
+                    <ValidationMessage For="@(() => Input.TwoFactorCode)" />
+
+                    <!-- Remember Machine Checkbox -->
+                    <MudStaticCheckBox @bind-Value="Input.RememberMachine"
+                                 Color="Color.Primary"
+                                 Label="Remember this device"
+                                 Class="mt-2" />
+
+                    <!-- Submit Button -->
+                    <MudStaticButton
+                               Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               FullWidth="true"
+                               Size="Size.Large"
+                               EndIcon="@Icons.Material.Filled.Login"
+                               FormAction="FormAction.Submit"
+                               Class="mt-4">
+                        Verify & Continue
+                    </MudStaticButton>
+                </MudStack>
+            </EditForm>
+
+            <!-- Recovery Code Link -->
+            <MudText Typo="Typo.body2" Class="mt-4 text-center">
+                Don't have access to your authenticator device? You can
+                <a Href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl">
+                    log in with a recovery code
+                </a>.
+            </MudText>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
 
 @code {
     private string? message;
@@ -83,19 +117,16 @@
         else
         {
             Logger.LogWarning("Invalid authenticator code entered for user with ID '{UserId}'.", userId);
-            message = "Error: Invalid authenticator code.";
+            message = "Invalid authenticator code. Please try again.";
         }
     }
 
     private sealed class InputModel
     {
-        [Required]
-        [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-        [DataType(DataType.Text)]
-        [Display(Name = "Authenticator code")]
+        [Required(ErrorMessage = "Authenticator code is required")]
+        [StringLength(7, ErrorMessage = "Code must be between {2} and {1} characters", MinimumLength = 6)]
         public string? TwoFactorCode { get; set; }
 
-        [Display(Name = "Remember this machine")]
         public bool RememberMachine { get; set; }
     }
 }
