@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace ECommerceMudblazorWebApp.Data.Models
+namespace ECommerceMudblazorWebApp.Models
 {
     public class CartItem
     {

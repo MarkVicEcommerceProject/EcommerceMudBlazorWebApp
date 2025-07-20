@@ -1,5 +1,5 @@
 ﻿@page "/"
-@using ECommerceMudblazorWebApp.Data.Models
+@using ECommerceMudblazorWebApp.Models
 @using MudBlazor
 
 @inject NavigationManager NavigationManager
@@ -90,7 +90,7 @@
         <!-- Second row - Flash sales content -->
         <div class="flex w-full flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
             <!-- Left section - Flash sales text and timer -->
-            <div class="flex flex-col gap-2 md:flex-row md:items-center md:gap-6 md:justify-between">
+            <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-6">
                 <h3 class="text-xl font-bold md:text-2xl">Flash Sales</h3>
 
                 <div class="flex items-center">
@@ -293,30 +293,30 @@
 
 <!-- Music Experience Promo Section -->
 <section class="font-inter mt-14 bg-black text-white">
-    <div class="max-w-7xl mx-auto px-6 py-12 md:py-16 grid grid-cols-1 gap-10 md:grid-cols-2 items-center">
+    <div class="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-12 md:grid-cols-2 md:py-16">
 
         <!-- Left Text & Countdown -->
         <div class="space-y-4 text-center md:text-left">
-            <p class="text-green-500 text-center font-medium">Categories</p>
-            <h2 class="text-center text-3xl md:text-4xl font-bold leading-tight md:mb-2">
+            <p class="text-center font-medium text-green-500">Categories</p>
+            <h2 class="text-center text-3xl leading-tight font-bold md:mb-2 md:text-4xl">
                 Enhance Your<br />Music Experience
             </h2>
 
             <!-- Countdown -->
-            <div class="flex justify-center md:justify-start space-x-3">
-                <div class="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-white text-black">
+            <div class="flex justify-center space-x-3 md:justify-start">
+                <div class="flex h-16 w-16 flex-col items-center justify-center rounded-full bg-white text-black">
                     <span class="text-xl font-bold">23</span>
                     <span class="text-xs">Hours</span>
                 </div>
-                <div class="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-white text-black">
+                <div class="flex h-16 w-16 flex-col items-center justify-center rounded-full bg-white text-black">
                     <span class="text-xl font-bold">05</span>
                     <span class="text-xs">Days</span>
                 </div>
-                <div class="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-white text-black">
+                <div class="flex h-16 w-16 flex-col items-center justify-center rounded-full bg-white text-black">
                     <span class="text-xl font-bold">59</span>
                     <span class="text-xs">Minutes</span>
                 </div>
-                <div class="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-white text-black">
+                <div class="flex h-16 w-16 flex-col items-center justify-center rounded-full bg-white text-black">
                     <span class="text-xl font-bold">35</span>
                     <span class="text-xs">Seconds</span>
                 </div>

@@ -1,4 +1,4 @@
-﻿namespace ECommerceMudblazorWebApp.Data.Models
+﻿namespace ECommerceMudblazorWebApp.Models
 {
     using System;
     using System.Collections.Generic;

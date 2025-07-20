@@ -1,4 +1,4 @@
-using ECommerceMudblazorWebApp.Data.Models;
+using ECommerceMudblazorWebApp.Models;
 
 namespace ECommerceMudblazorWebApp.Services
 {

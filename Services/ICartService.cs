@@ -1,6 +1,6 @@
 namespace ECommerceMudblazorWebApp.Services
 {
-    using ECommerceMudblazorWebApp.Data.Models;
+    using ECommerceMudblazorWebApp.Models;
 
     public interface ICartService
     {
