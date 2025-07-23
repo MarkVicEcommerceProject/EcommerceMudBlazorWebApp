@@ -1,0 +1,83 @@
+﻿@page "/admin/products"
+@using ECommerceMudblazorWebApp.Components.Admin.Services
+@using ECommerceMudblazorWebApp.Models
+@attribute [Authorize(Roles = "Admin")]
+@inject IProductService productService
+@inject NavigationManager NavigationManager
+@inject IDialogService DialogService
+
+<PageTitle>Product Management</PageTitle>
+
+<section class="mx-auto py-6 md:w-1/3">
+    <MudLink Href="/admin/products/create" Class="mud-button mud-button-filled mud-button-primary">
+        Create New Product
+    </MudLink>
+</section>
+
+<section>
+    <MudTable Items="FilteredItems" Striped="true" Hover="true" SortLabel="Sort by" FilterLabel="Filter by" T="Product">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Products</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortBy="new Func<Product, object>(p => p.Name)">Name</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortBy="new Func<Product, object>(p => p.Price)">Price</MudTableSortLabel></MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Product Name">@context.Name</MudTd>
+            <MudTd DataLabel="Price">Ksh. @context.Price.ToString("N2")</MudTd>
+            <MudTd DataLabel="Actions" Class="flex justify-center align-middle">
+                <MudButton Href="@($"/admin/products/details/{context.Id}")" Class="mud-button mud-button-filled">
+                    View Details
+                </MudButton>
+                <MudButton Href="@($"/admin/products/edit/{context.Id}")" Class="mud-button mud-button-filled">
+                    Edit
+                </MudButton>
+                <MudButton onclick="@((e)=> openDialogAsync(context.Id))" Variant="Variant.Filled" Color="Color.Error">
+                    Delete
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" />
+        </PagerContent>
+    </MudTable>
+</section>
+
+@code {
+    private string searchString1 = string.Empty;
+    private List<Product> products = new();
+
+    private IEnumerable<Product> FilteredItems => string.IsNullOrWhiteSpace(searchString1)
+        ? products
+        : products.Where(p => p.Name.Contains(searchString1, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    private async Task openDialogAsync(int productId)
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(DeleteProductDialog.ProductId), productId }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium };
+
+        var dialogReference = await DialogService.ShowAsync<DeleteProductDialog>("Delete Product", parameters, options);
+
+        var result = await dialogReference.Result;
+        if (!result.Canceled)
+        {
+            // Optionally refresh the list or navigate
+            NavigationManager.NavigateTo("/admin/products", forceLoad: true);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        products = (await productService.GetAllProductsAsync()).ToList();
+    }
+
+
+}

@@ -36,7 +36,7 @@
                 <MudTd>Ksh @context.Product.Price.ToString("N2")</MudTd>
                 <MudTd>
                     <MudNumericField T="int" Value="context.Quantity" ValueChanged="@(q => UpdateQuantity(context.ProductId, q))"
-                        Min="1" Max="@(context.Product.StockQuantity == 0 ? 10 : context.Product.StockQuantity)"
+                        Min="1" Max="@(context.Product.StockQuantity)"
                         Immediate="true" Variant="Variant.Outlined" />
                 </MudTd>
                 <MudTd>Ksh @((context.Product.Price * context.Quantity).ToString("N2"))</MudTd>

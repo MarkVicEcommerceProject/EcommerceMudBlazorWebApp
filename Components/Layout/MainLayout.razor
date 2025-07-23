@@ -42,11 +42,11 @@
                     CurrentUrl="@currentUrl" />
 
             <MudDrawer @bind-Open="@drawerOpen"
-                       Variant="@DrawerVariant.Temporary"
-                       Elevation="1"
-                       OverlayAutoClose="true"
-                       Class="mud-theme-default"
-                       >
+                    Variant="@DrawerVariant.Temporary"
+                    Elevation="1"
+                    OverlayAutoClose="true"
+                    Class="mud-theme-default"
+                    >
 
                 <MudNavMenu>
                     <MudNavLink Href="/" Match="NavLinkMatch.All">Home</MudNavLink>
@@ -65,10 +65,10 @@
                             <AntiforgeryToken />
                             <input type="hidden" name="ReturnUrl" value="@currentUrl" />
                             <MudIconButton Icon="@Icons.Material.Filled.Logout"
-                                           Color="Color.Inherit"
-                                           Class="text-white"
-                                           ButtonType="ButtonType.Submit"
-                                           AriaLabel="Logout" />
+                                        Color="Color.Inherit"
+                                        Class="text-white"
+                                        ButtonType="ButtonType.Submit"
+                                        AriaLabel="Logout" />
                         </form>
                     }
                     else

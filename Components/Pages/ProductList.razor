@@ -2,15 +2,19 @@
 @page "/products/{Category}"
 @using ECommerceMudblazorWebApp.Models
 @using ECommerceMudblazorWebApp.Services
+@using ECommerceMudblazorWebApp.Components.Admin.Services
 @inject ICartService CartService
 @inject NavigationManager NavigationManager
+@inject IProductService ProductService
+@inject ICategoryService CategoryService
+
 
 <PageTitle>Products</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
 
     <MudText Typo="Typo.h4" Class="mb-4 font-bold">
-        @(GetPrimaryCategory(Products.FirstOrDefault()) ?? "All Products")
+        @Category
     </MudText>
 
     <MudGrid Gutter="Size.Small" Justify="Justify.FlexStart">
@@ -19,10 +23,10 @@
             <MudItem xs="12" sm="6" md="4" lg="3">
                 <MudCard Class="flex h-full flex-col justify-between p-4 shadow-xl">
                     <MudCardMedia Image="@product.ImagePath"
-                                  Class="h-48"
-                                  Height="192"
-                                  Title="gaming pc"
-                                  Style="object-fit: contain; background-size: contain;" />
+                                Class="h-48"
+                                Height="192"
+                                Title="gaming pc"
+                                Style="object-fit: contain; background-size: contain;" />
                     <MudCardContent>
                         <MudText Typo="Typo.h6" Class="font-semibold">@product.Name</MudText>
                         <MudText Class="text-gray-500">@GetPrimaryCategory(product)</MudText>
@@ -45,22 +49,15 @@
     public string? Category { get; set; }
 
     private List<Product> Products = new();
+    private List<Category> Categories = new();
     private List<Product> DisplayedProducts => string.IsNullOrEmpty(Category) || Category == "All"
         ? Products
         : Products.Where(p => p.ProductCategories.Any(pc => pc.Category.Name.Equals(Category, StringComparison.OrdinalIgnoreCase))).ToList();
 
     protected override async Task OnInitializedAsync()
-    { 
-        // Simulate fetching products from a service or database
-        Products = await Task.FromResult(new List<Product>
-        {
-            new Product { Id = 1, Name = "havier gaming console", Price = 100, ImageUrl = "https://placehold.co/400", ImagePath = "/images/gridImage.png", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Electronics" } } } },
-            new Product { Id = 2, Name = "gridge phone", Price = 200, ImageUrl = "https://via.placeholder.com/150", ImagePath = "/images/gridImage.png", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Computers" } } } },
-            new Product { Id = 3, Name = "samasung phone", Price = 150, ImageUrl = "https://placehold.co/400", ImagePath = "/images/gamingpc.png", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Kids Electronics" } } } },
-            new Product { Id = 4, Name = "Product 4", Price = 250, ImageUrl = "https://via.placeholder.com/150", ImagePath = "/images/gridImage.png", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Home Appliances" } } } },
-            new Product { Id = 5, Name = "Product 5", Price = 300, ImageUrl = "https://via.placeholder.com/150", ImagePath = "/images/gridImage.png", ProductCategories = new List<ProductCategory> { new ProductCategory { Category = new Category { Name = "Electronics" } } } },
-            // Add more products as needed
-        });
+    {
+        Products = (await ProductService.GetAllProductsAsync()).ToList();
+        Categories = (await CategoryService.GetAllAsync()).ToList();
     }
     protected override void OnParametersSet()
     {
@@ -70,9 +67,12 @@
         }
     }
 
-    string? GetPrimaryCategory(Product product)
+    public string GetPrimaryCategory(Product product)
     {
-        return product.ProductCategories.FirstOrDefault()?.Category?.Name ?? "Uncategorized";
+        var matchedCategories = Categories
+            .Where(c => product.ProductCategories.Any(pc => pc.CategoryId == c.Id))
+            .Select(c => c.Name);
+        return matchedCategories.Any() ? string.Join(", ", matchedCategories) : "Uncategorized";
     }
 
     private void AddToCart(Product product)

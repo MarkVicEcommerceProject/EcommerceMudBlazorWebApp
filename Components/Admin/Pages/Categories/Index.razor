@@ -1,0 +1,74 @@
+@page "/admin/categories"
+@using ECommerceMudblazorWebApp.Components.Admin.Services
+@using ECommerceMudblazorWebApp.Models
+@inject ICategoryService CategoryService
+@inject NavigationManager Nav
+
+<PageTitle>Categories</PageTitle>
+
+<MudPaper Class="p-4">
+    <MudText Typo="Typo.h5">Manage Categories</MudText>
+
+    <MudButton StartIcon="@Icons.Material.Filled.Add"
+            Color="Color.Primary"
+            Variant="Variant.Filled"
+            Class="my-2"
+            OnClick="@(() => Nav.NavigateTo("/admin/categories/create"))">
+        Create New Category
+    </MudButton>
+
+    <MudTable Items="filteredProducts" Hover="true" Bordered="true" Striped="true">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Products</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>Id</MudTh>
+            <MudTh>Name</MudTh>
+            <MudTh>Slug</MudTh>
+            <MudTh>Parent</MudTh>
+            <MudTh>Child Categories</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Id">@context.Id</MudTd>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Slug">@context.Slug</MudTd>
+            <MudTd DataLabel="Parent" Class="text-center">@(context.ParentCategory?.Name ?? "—")</MudTd>
+            <MudTd DataLabel="Child categories">@string.Join(", ", context.ChildCategories?.Select(c => c.Name)) </MudTd>
+
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                            Color="Color.Error"
+                            OnClick="@(() => DeleteCategory(context.Id))" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private List<Category> _categories = [];
+    private string? searchString;
+
+    private IEnumerable<Category> filteredProducts => string.IsNullOrWhiteSpace(searchString)
+        ? _categories
+        : _categories.Where(c => c.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)).ToList();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        _categories = (await CategoryService.GetAllAsync()).ToList();
+    }
+
+    private async Task DeleteCategory(int id)
+    {
+        var success = await CategoryService.DeleteAsync(id);
+        if (success)
+        {
+            _categories = (await CategoryService.GetAllAsync()).ToList();
+            StateHasChanged();
+        }
+    }
+
+}

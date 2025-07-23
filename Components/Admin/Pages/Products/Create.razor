@@ -1,0 +1,229 @@
+﻿@page "/admin/products/create"
+@using ECommerceMudblazorWebApp.Components.Admin.Services
+@using ECommerceMudblazorWebApp.Models
+@using System.ComponentModel.DataAnnotations
+
+@inject IProductService ProductService
+@inject ICategoryService CategoryService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create Product</PageTitle>
+
+<section>
+    <MudLink Href="/admin/products" Class="mud-button mud-filled-button mud-button-primary">
+        Back to Products
+    </MudLink>
+
+    <MudContainer MaxWidth="MaxWidth.Large" Class="font-inter mt-4 rounded-lg p-6 shadow-md">
+        <MudText Typo="Typo.h4" Class="mb-4 font-bold">Create New Product</MudText>
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <MudAlert Severity="Severity.Error" Elevation="1" Class="mb-4">
+                @errorMessage
+            </MudAlert>
+        }
+
+        <EditForm Model="Input" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <MudTextField T="string" Label="Product Name" @bind-Value="Input.Name" For="@(() => Input.Name)" Required="true" />
+            <MudNumericField T="decimal" Label="Price" @bind-Value="Input.Price" For="@(() => Input.Price)" Required="true"
+                            Adornment="Adornment.Start" AdornmentText="KES" />
+            <MudTextField T="string" Label="Description" @bind-Value="Input.Description" For="@(() => Input.Description)" Lines="4" />
+            <MudNumericField T="int" Label="Stock Quantity" @bind-Value="Input.StockQuantity" For="@(() => Input.StockQuantity)" Required="true" />
+            <MudSelect T="int" Label="Select Categories" MultiSelection="true" @bind-SelectedValues="Input.SelectedCategoryIds"
+                ToStringFunc="@(id => allCategories.FirstOrDefault(c => c.Id == id)?.Name)">
+                @foreach (var category in allCategories)
+                {
+                    <MudSelectItem T="int" Value="@category.Id">@category.Name</MudSelectItem>
+                }
+            </MudSelect>
+
+            @if(Input.SelectedCategoryIds.Count() > 0){
+                <MudChipSet T="int" SelectionMode="SelectionMode.MultiSelection" CheckMark="true">
+                    @foreach(var id in Input.SelectedCategoryIds){
+                        var cat = allCategories.FirstOrDefault(c => c.Id == id);
+                        if(cat != null){
+                            <MudChip Color="Color.Primary" Closeable="true" OnClose="@((MudChip<int> chip) => RemoveCategory(id) )">
+                                @cat.Name
+                            </MudChip>
+                            Console.WriteLine(id);
+                        }
+                    }
+                </MudChipSet>
+            }
+
+            <div class="flex justify-between items-center gap-x-3 mt-3">
+                <MudStaticTextField T="string" Label="Image Path" @bind-Value="Input.ImagePath" For="@(() => Input.ImagePath)" />
+                <MudText>or</MudText>
+                <MudFileUpload @ref="_fileUpload"
+                            T="IBrowserFile"
+                            Accept=".png, .jpg, .jpeg, .gif"
+                            OnFilesChanged="UploadFiles"
+                            For="@(() => Input.File)"
+                            @bind-Files="Input.File">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload">
+                            Upload Files
+                        </MudButton>
+                    </ActivatorContent>
+                    <SelectedTemplate Context="fileContext">
+                        <MudText>@(fileContext?.Name ?? "No file selected")</MudText>
+                    </SelectedTemplate>
+                </MudFileUpload>
+            </div>
+
+            <MudStaticButton FormAction="FormAction.Submit"
+                            Color="Color.Primary"
+                            Disabled="@isSubmitting"
+                            Variant="Variant.Filled"
+                            Class="mt-4">
+                @if (isSubmitting)
+                {
+                    <MudProgressCircular Indeterminate="true" Size="Size.Large" Class="me-2">
+                        <ChildContent>Submitting...</ChildContent>
+                    </MudProgressCircular>
+                }
+                else
+                {
+                    <MudText>Submit</MudText>
+                }
+            </MudStaticButton>
+        </EditForm>
+    </MudContainer>
+</section>
+
+@code {
+    private InputModel Input { get; set; } = new();
+    private MudFileUpload<IBrowserFile> _fileUpload;
+    private IBrowserFile _selectedFile;
+    private bool isSubmitting = false;
+    private string errorMessage = string.Empty;
+    private const long maxFileSize = 5 * 1024 * 1024;
+    private List<Category> allCategories = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        allCategories = (await CategoryService.GetAllAsync()).ToList(); 
+    }
+    private async Task HandleValidSubmit()
+    {
+        errorMessage = string.Empty;
+        isSubmitting = true;
+
+        if (_selectedFile != null)
+        {
+            try
+            {
+                var ext = Path.GetExtension(_selectedFile.Name).ToLowerInvariant();
+                var fileName = $"{Guid.NewGuid()}{ext}";
+                var uploadPath = Path.Combine("wwwroot", "images", "uploads");
+
+                if (!Directory.Exists(uploadPath))
+                    Directory.CreateDirectory(uploadPath);
+
+                var filePath = Path.Combine(uploadPath, fileName);
+
+                using var stream = new FileStream(filePath, FileMode.Create);
+                await _selectedFile.OpenReadStream(maxFileSize).CopyToAsync(stream);
+
+                Input.ImagePath = $"/images/uploads/{fileName}";
+                Input.Filename = fileName;
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "An error occurred while saving the image. Please try again.";
+                Console.WriteLine($"Image upload error: {ex.Message}");
+                isSubmitting = false;
+                return;
+            }
+        }
+
+        var newProduct = new Product
+        {
+            Name = Input.Name,
+            Price = Input.Price,
+            Description = Input.Description,
+            StockQuantity = Input.StockQuantity,
+            ImagePath = Input.ImagePath,
+            ImageUrl = Input.ImagePath,
+            ProductCategories = Input.SelectedCategoryIds.Select(id => new ProductCategory
+            {
+                CategoryId = id
+            }).ToList()
+        };
+
+        try
+        {
+            await ProductService.CreateProductAsync(newProduct);
+            NavigationManager.NavigateTo("/admin/products");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error creating product: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void UploadFiles(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+
+        if (file == null || file.Size > maxFileSize)
+        {
+            errorMessage = "Invalid image. File must be less than 5MB.";
+            return;
+        }
+
+        var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+        if (!new[] { ".jpg", ".jpeg", ".png", ".gif" }.Contains(ext))
+        {
+            errorMessage = "Invalid file type. Allowed: .jpg, .jpeg, .png, .gif.";
+            return;
+        }
+
+        _selectedFile = file;
+        Input.Filename = file.Name;
+        errorMessage = string.Empty;
+    }
+
+    private void RemoveCategory(int id)
+    {
+        
+        var updated = Input.SelectedCategoryIds.ToHashSet();
+        if(updated.Remove(id)){
+            Input.SelectedCategoryIds = updated;
+        }
+        
+    }
+
+
+    private sealed class InputModel
+    {
+        [Required(ErrorMessage = "Product name is required.")]
+        public string Name { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Price is required.")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than zero.")]
+        public decimal Price { get; set; }
+
+        [Required(ErrorMessage = "Description is required.")]
+        public string Description { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Stock quantity is required.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Stock quantity must be at least 1.")]
+        public int StockQuantity { get; set; }
+
+        public string ImagePath { get; set; } = string.Empty;
+        public string Filename { get; set; } = string.Empty;
+        public IBrowserFile File { get; set; }
+
+        [Required(ErrorMessage = "Select At least 1 Category")]
+        public IEnumerable<int> SelectedCategoryIds { get; set; } = new HashSet<int>();
+    }
+}

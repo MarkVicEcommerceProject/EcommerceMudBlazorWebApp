@@ -13,7 +13,7 @@ namespace ECommerceMudblazorWebApp.Services
 {
     internal static class PaypalEndpoints
     {
-        // PayPal API endpoints here
+        // PayPal API endpoints 
         public static IEndpointConventionBuilder MapPaypalEndpoints(this IEndpointRouteBuilder endpoints)
         {
             ArgumentNullException.ThrowIfNull(endpoints);

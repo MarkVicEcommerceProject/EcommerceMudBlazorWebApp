@@ -1,5 +1,6 @@
 using ECommerceMudblazorWebApp.Components;
 using ECommerceMudblazorWebApp.Components.Account;
+using ECommerceMudblazorWebApp.Components.Admin.Services;
 using ECommerceMudblazorWebApp.Data;
 using ECommerceMudblazorWebApp.Services;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -40,6 +41,8 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddScoped<ICategoryService,CategoryService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddSingleton<ICartService, CartService>();
 builder.Services.AddOrderServices(useMock: true);
 

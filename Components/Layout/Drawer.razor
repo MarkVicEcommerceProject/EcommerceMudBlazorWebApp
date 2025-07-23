@@ -2,18 +2,20 @@
 @using Microsoft.AspNetCore.Components.Authorization
 
 <MudDrawer Open="@Open"
-               Variant="@DrawerVariant.Responsive"
-               Anchor="Anchor.Left"
-               Elevation="1"
-               Class="mud-theme-default"
-               
-               Style="z-index: 1200;">
+            Variant="@DrawerVariant.Responsive"
+            Anchor="Anchor.Left"
+            Elevation="1"
+            Class="mud-theme-default"
+            Style="z-index: 1200;">
 
-        <MudNavMenu>
-            <MudNavLink Href="/" Match="NavLinkMatch.All">Home</MudNavLink>
+    <MudNavMenu Class="flex flex-col justify-between gap-3.5 align-middle">
+        <div>
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
             <MudNavLink Href="/contact">Contact</MudNavLink>
             <MudNavLink Href="/about">About</MudNavLink>
             <MudNavLink Href="/account/register">Signup</MudNavLink>
+        </div>
+            
 
             @if (isAuthenticated)
             {
@@ -26,10 +28,10 @@
                     <AntiforgeryToken />
                     <input type="hidden" name="ReturnUrl" value="@CurrentUrl" />
                     <MudIconButton Icon="@Icons.Material.Filled.Logout"
-                                   Color="Color.Inherit"
-                                   Class="text-white"
-                                   ButtonType="ButtonType.Submit"
-                                   AriaLabel="Logout" />
+                                Color="Color.Inherit"
+                                Class="text-white"
+                                ButtonType="ButtonType.Submit"
+                                AriaLabel="Logout" />
                 </form>
             }
             else

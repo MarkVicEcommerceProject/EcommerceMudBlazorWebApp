@@ -1,0 +1,87 @@
+@page "/admin/categories/create"
+@using ECommerceMudblazorWebApp.Components.Admin.Services
+@using ECommerceMudblazorWebApp.Models
+@using System.ComponentModel.DataAnnotations
+@inject ICategoryService CategoryService
+@inject NavigationManager Nav
+
+<PageTitle>Create Category</PageTitle>
+
+<MudPaper Class="p-4">
+    <MudText Typo="Typo.h5">Create New Category</MudText>
+
+    <EditForm Model="Input" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <MudTextField @bind-Value="Input.Name" Label="Name" Required="true" For="@(() => Input.Name)" />
+        <MudTextField @bind-Value="Input.Slug" Label="Slug" Required="true" For="@(() => Input.Slug)" />
+        <MudTextField @bind-Value="Input.Description" Label="Description" Lines="3" For="@(() => Input.Description)" />
+
+        <MudSelect T="int?" @bind-Value="Input.ParentCategoryId" Label="Parent Category"
+            For="@(() => Input.ParentCategoryId)">
+            <MudSelectItem T="int?" Value="@(null)">None</MudSelectItem>
+            @foreach (var cat in _allCategories)
+            {
+                <MudSelectItem T="int?" Value="@cat.Id">@cat.Name</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudStaticButton FormAction="FormAction.Submit" Color="Color.Primary" Disabled="@isSubmitting"
+            Variant="Variant.Filled" Class="mt-4">
+            @if (isSubmitting)
+            {
+                <MudProgressCircular Indeterminate="true" Size="Size.Large" Class="me-2">
+                    <ChildContent>Submitting..</ChildContent>
+                </MudProgressCircular>
+            }
+            else
+            {
+                <MudText>Submit</MudText>
+            }
+        </MudStaticButton>
+    </EditForm>
+</MudPaper>
+
+@code {
+    private InputModel Input { get; set; } = new();
+    private List<Category> _allCategories = [];
+    private bool isSubmitting { get; set; } = false; 
+
+    protected override async Task OnInitializedAsync()
+    {
+        _allCategories = (await CategoryService.GetAllAsync()).ToList();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        isSubmitting = true;
+        var newCategory = new Category
+        {
+            Name = Input.Name,
+            Slug = Input.Slug,
+            Description = Input.Description,
+            ParentCategoryId = Input.ParentCategoryId
+        };
+
+        await CategoryService.CreateAsync(newCategory);
+        Nav.NavigateTo("/admin/categories");
+    }
+
+    private sealed class InputModel
+    {
+        [Required(ErrorMessage = "Name is required.")]
+        [StringLength(100, ErrorMessage = "Name must be at most 100 characters.")]
+        public string Name { get; set; }
+
+        [StringLength(500, ErrorMessage = "Description can be up to 500 characters.")]
+        public string Description { get; set; }
+
+        [Required(ErrorMessage = "Slug is required.")]
+        [RegularExpression(@"^[a-z0-9]+(?:-[a-z0-9]+)*$", ErrorMessage = "Slug must be lowercase and hyphen-separated.")]
+        [StringLength(100, ErrorMessage = "Slug must be at most 100 characters.")]
+        public string Slug { get; set; }
+
+        public int? ParentCategoryId { get; set; }
+    }
+}

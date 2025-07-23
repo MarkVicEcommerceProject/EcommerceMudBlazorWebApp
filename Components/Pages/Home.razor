@@ -1,8 +1,10 @@
 ﻿@page "/"
 @using ECommerceMudblazorWebApp.Models
 @using MudBlazor
+@using ECommerceMudblazorWebApp.Components.Admin.Services
 
 @inject NavigationManager NavigationManager
+@inject IProductService ProductService
 
 <PageTitle>Home</PageTitle>
 
@@ -125,18 +127,18 @@
             <MudItem xs="12" sm="6" md="3" Class="flex justify-center">
                 <MudCard Class="w-full cursor-pointer">
                     <MudCardMedia Image="./images/gridImage.png"
-                                  Class="h-48" 
-                                  Height="192" 
-                                  Title="AK-900 Wired Keyboard"
-                                  Style="object-fit: contain; background-size: contain;" />
+                                Class="h-48" 
+                                Height="192" 
+                                Title="AK-900 Wired Keyboard"
+                                Style="object-fit: contain; background-size: contain;" />
                     <MudCardContent>
                         <h4 class="font-semibold">HAVIT HV-G92 Gamepad</h4>
-                        <p class="font-bold text-red-500">$120 <span class="text-gray-400 line-through">$160</span></p>
+                        <p class="font-bold text-red-500">Ksh 120 <span class="text-gray-400 line-through">Ksh 160</span></p>
                         <p class="text-yellow-500">★★★★★ (88)</p>
                         <MudButton Variant="Variant.Filled"
-                                   Color="Color.Default"
-                                   Style="background-color:#DB4444;color:white"
-                                   Class="mt-2 w-full">
+                                Color="Color.Default"
+                                Style="background-color:#DB4444;color:white"
+                                Class="mt-2 w-full">
                             Add To Cart
                         </MudButton>
                     </MudCardContent>
@@ -153,7 +155,7 @@
 
                     <MudCardContent>
                         <h4 class="font-semibold">AK-900 Wired Keyboard</h4>
-                        <p class="font-bold text-red-500">$960 <span class="text-gray-400 line-through">$1160</span></p>
+                        <p class="font-bold text-red-500">Ksh 960 <span class="text-gray-400 line-through">Ksh 1160</span></p>
                         <p class="text-yellow-500">★★★★☆ (75)</p>
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Default"
@@ -174,7 +176,7 @@
                                   Style="object-fit: contain; background-size: contain;" />
                     <MudCardContent>
                         <h4 class="font-semibold">IPS LCD Gaming Monitor</h4>
-                        <p class="font-bold text-red-500">$370 <span class="text-gray-400 line-through">$400</span></p>
+                        <p class="font-bold text-red-500">Ksh 370 <span class="text-gray-400 line-through">Ksh 400</span></p>
                         <p class="text-yellow-500">★★★★☆ (99)</p>
                         <MudButton Variant="Variant.Filled"
                                    Color="Color.Default"
@@ -195,7 +197,7 @@
                                   Style="object-fit: contain; background-size: contain;" />
                     <MudCardContent>
                         <h4 class="font-semibold">Wireless HeadPhones</h4>
-                        <p class="font-bold text-red-500">$375 <span class="text-gray-400 line-through">$400</span></p>
+                        <p class="font-bold text-red-500">Ksh 375 <span class="text-gray-400 line-through">Ksh 400</span></p>
                         <p class="text-yellow-500">★★★★☆ (40)</p>
                         <MudButton Variant="Variant.Filled" 
                                             Color="Color.Default"
@@ -239,12 +241,16 @@
         
         @foreach(var category in Categories)
         {
-            <MudPaper Class="flex min-h-36 cursor-pointer flex-col items-center justify-center p-4 transition-colors duration-200 hover:bg-gray-100"
-                      OnClick="@(() => SelectCategory(category.Id))"
-                      Style="border: 1px solid #e5e7eb; border-radius: 0.375rem;">
-                <MudIcon Icon="@GetCategoryIcon(category.Slug)" Size="Size.Large" Class="mb-2 text-gray-700" />
-                <span class="text-sm font-medium text-gray-900">@category.Name</span>
-            </MudPaper>
+            <MudLink Href="/products/iphone">
+                <MudPaper
+                    Class="flex min-h-36 cursor-pointer flex-col items-center justify-center p-4 transition-colors duration-200 hover:bg-gray-100"
+                    OnClick="@(() => SelectCategory(category.Id))"
+                    Style="border: 1px solid #e5e7eb; border-radius: 0.375rem;">
+                    <MudIcon Icon="@GetCategoryIcon(category.Slug)" Size="Size.Large" Class="mb-2 text-gray-700" />
+                    <span class="text-sm font-medium text-gray-900">@category.Name</span>
+                </MudPaper>
+            </MudLink>
+            
         }
 
     </div>
@@ -262,17 +268,17 @@
 
         <h2 class="mb-6 text-2xl font-bold text-gray-900">Best Selling Products</h2>
 
-        <MudGrid Gutter="GutterSize.Small" Justify="Justify.FlexStart">
+        <MudGrid Gutter="GutterSize.Small" Justify="Justify.Center" Class="items-center">
             @foreach(var product in Products )
             {
                 <MudItem xs="12" sm="6" md="3" Class="relative flex justify-center" onclick="">
                     <MudCard Class="w-full cursor-pointer">
 
                         <MudCardMedia Image="@(product.ImageUrl ?? product.ImagePath ?? "./images/gridImage.png")"
-                                      Class="h-48"
-                                      Height="192"
-                                      Title="@product.Name"
-                                      Style="object-fit: contain; background-size: contain;" />
+                                    Class="h-48"
+                                    Height="192"
+                                    Title="@product.Name"
+                                    Style="object-fit: cover; background-size: 200px;" />
                         <div class="absolute top-2 right-0 flex flex-col gap-1">
                             <MudIconButton Icon="@Icons.Material.Filled.FavoriteBorder" Color="Color.Default" />
                             <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Default" />
@@ -357,7 +363,7 @@
 
     private string? currentUrl;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         // Initialize categories
         Categories = new List<Category>
@@ -370,13 +376,7 @@
             new Category{Id = 6, Name="Gaming",Slug="gaming"},
         };
 
-        Products = new List<Product>
-        {
-            new Product{Id = 1, Name="product1", ImagePath="./images/gridImage.png",Price=500},
-            new Product{Id = 2, Name="product2", ImagePath="./images/gridImage.png",Price=500},
-            new Product{Id = 3, Name="product3", ImagePath="./images/gridImage.png",Price=500},
-            new Product{Id = 4, Name="product4", ImagePath="./images/gridImage.png",Price=500},
-        };
+        Products = (await ProductService.GetAllProductsAsync()).ToList();
 
         SelectedCategoryIndex = 4; 
     }
