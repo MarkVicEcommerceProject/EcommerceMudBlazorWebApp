@@ -22,16 +22,20 @@
         {
             <MudItem xs="12" sm="6" md="4" lg="3">
                 <MudCard Class="flex h-full flex-col justify-between p-4 shadow-xl">
-                    <MudCardMedia Image="@product.ImagePath"
+                    
+                        <MudCardMedia Image="@product.ImagePath"
                                 Class="h-48"
                                 Height="192"
                                 Title="gaming pc"
+                                onclick="@(()=>navigateToDetails(product.Id))"
                                 Style="object-fit: contain; background-size: contain;" />
-                    <MudCardContent>
-                        <MudText Typo="Typo.h6" Class="font-semibold">@product.Name</MudText>
-                        <MudText Class="text-gray-500">@GetPrimaryCategory(product)</MudText>
-                        <MudText Typo="Typo.subtitle1" Class="mt-2 font-bold">Ksh @product.Price</MudText>
-                    </MudCardContent>
+                        <MudCardContent>
+                            <MudText Typo="Typo.h6" Class="font-semibold">@product.Name</MudText>
+                            <MudText Class="text-gray-500">@GetPrimaryCategory(product)</MudText>
+                            <MudText Typo="Typo.subtitle1" Class="mt-2 font-bold">Ksh @product.Price</MudText>
+                        </MudCardContent>
+                    
+                    
                     <MudCardActions Class="mt-4">
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => AddToCart(product)">
                             Add to Cart
@@ -73,6 +77,10 @@
             .Where(c => product.ProductCategories.Any(pc => pc.CategoryId == c.Id))
             .Select(c => c.Name);
         return matchedCategories.Any() ? string.Join(", ", matchedCategories) : "Uncategorized";
+    }
+
+    private void navigateToDetails(int id){
+        NavigationManager.NavigateTo($"/products/details/{id}");
     }
 
     private void AddToCart(Product product)
