@@ -118,6 +118,10 @@
         return matchedCategories.Any() ? string.Join(", ", matchedCategories) : "Uncategorized";
     }
 
+    private void navigateToDetails(int id){
+        NavigationManager.NavigateTo($"/products/details/{id}");
+    }
+
     private void NavigateToDetails(int id)
     {
         NavigationManager.NavigateTo($"/products/details/{id}");
