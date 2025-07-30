@@ -3,6 +3,8 @@ using ECommerceMudblazorWebApp.Components.Account;
 using ECommerceMudblazorWebApp.Components.Admin.Services;
 using ECommerceMudblazorWebApp.Data;
 using ECommerceMudblazorWebApp.Services;
+using ECommerceMudblazorWebApp.Services.Orders;
+using ECommerceMudblazorWebApp.Services.Cart;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -30,7 +32,9 @@ builder.Services.AddAuthentication(options =>
     .AddIdentityCookies();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+/*builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(connectionString));*/
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -40,11 +44,13 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
-builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICategoryService,CategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
-builder.Services.AddSingleton<ICartService, CartService>();
-builder.Services.AddOrderServices(useMock: true);
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddOrderServices(useMock: false);
+builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddScoped<CartStateService>();
 
 var app = builder.Build();
 

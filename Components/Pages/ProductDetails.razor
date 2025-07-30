@@ -1,0 +1,190 @@
+@page "/products/details/{Id}"
+@using ECommerceMudblazorWebApp.Components.Admin.Services
+@using ECommerceMudblazorWebApp.Models
+@inject IProductService ProductService
+@inject NavigationManager NavigationManager
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="m-6 font-inter">
+    <section class="flex flex-col md:flex-row gap-8">
+        <!-- Images Section -->
+        <section class="w-full md:w-1/2">
+            <MudPaper Elevation="0" Class="h-full  bg-gray-100 rounded-lg">
+                <div class="p-3">
+                    <MudImage Src="@($"{product?.ImagePath}")" Class="w-full h-full object-fill" />
+                </div>
+            </MudPaper>
+        </section>
+
+        <!-- Description Section -->
+        <section class="w-full md:w-1/2">
+            <MudPaper Elevation="0" Class="pa-6">
+                <MudStack>
+                    <MudText Typo="Typo.h4" Class="font-bold">@(product?.Name)</MudText>
+                    
+                    <div class="flex items-center gap-2">
+                        <MudRating Value="5" ReadOnly Class="my-2" />
+                        <MudText Class="text-gray-500">(88 reviews)</MudText>
+                    </div>
+                    
+                    <MudText Typo="Typo.h5" Class="font-bold my-4">Ksh @(product?.Price)</MudText>
+                    
+                    <MudText Class="text-gray-600 mb-4 font-inter">
+                        @(product?.Description ?? "No description available for this product."))
+                    </MudText>
+                    
+                    <div class="my-4">
+                        <MudText Class="font-semibold">Colours:</MudText>
+                        <div class="flex gap-2 mt-2">
+                            <!-- Color selection buttons -->
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" Class="min-w-0 p-2 bg-red-500"></MudButton>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" Class="min-w-0 p-2 bg-blue-500"></MudButton>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small" Class="min-w-0 p-2 bg-black"></MudButton>
+                        </div>
+                    </div>
+                    
+                    <div class="my-4">
+                        <MudText Class="font-semibold">Size:</MudText>
+                        <div class="flex gap-2 mt-2">
+                            <!-- Size selection buttons -->
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small">XS</MudButton>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small">S</MudButton>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small">M</MudButton>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small">L</MudButton>
+                            <MudButton Variant="Variant.Outlined" Size="Size.Small">X</MudButton>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-4 my-6">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="px-8">Buy Now</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Success" Class="px-8">Add To Cart</MudButton>
+                    </div>
+                    
+                    <div class="border-t border-b border-gray-200 py-4 my-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Class="text-gray-500" />
+                            <div>
+                                <MudText Class="font-semibold">Free Delivery</MudText>
+                                <MudText Class="text-sm text-gray-500">Enter your postal code for Delivery Availability</MudText>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-2">
+                            <MudIcon Icon="@Icons.Material.Filled.AssignmentReturn" Class="text-gray-500" />
+                            <div>
+                                <MudText Class="font-semibold">Return Delivery</MudText>
+                                <MudText Class="text-sm text-gray-500">Free 30 Days Delivery Returns, Details</MudText>
+                            </div>
+                        </div>
+                    </div>
+                </MudStack>
+            </MudPaper>
+        </section>
+    </section>
+    
+    <!-- Related Items Section -->
+    <section class="mt-16">
+        <div class="flex items-center mb-6">
+            <div class="mr-2 h-6 w-2 bg-[#DB4444]"></div>
+            <MudText Typo="Typo.h6" Style="color:#DB4444" Class="text-c font-semibold">Related Items</MudText>
+        </div>
+        
+        <MudGrid Spacing="2">
+            <MudItem xs="12" sm="6" md="3" Class="flex justify-center">
+                <MudCard Class="max-w-xs">
+                    <MudCardContent>
+                        <div class="relative">
+                            <MudImage Src="path_to_related_product_1" Class="w-full h-48 object-contain" />
+                            <MudBadge Class="absolute top-2 left-2 bg-[#DB4444] text-white">-25%</MudBadge>
+                        </div>
+                        <MudText Typo="Typo.body1" Class="font-semibold mt-2">HAVIT HV-G92 Gamepad</MudText>
+                        <div class="flex gap-2 mt-1">
+                            <MudText Class="text-[#DB4444] font-semibold">$120</MudText>
+                            <MudText Class="text-gray-500 line-through">$160</MudText>
+                        </div>
+                        <div class="flex items-center mt-1">
+                            <MudRating Value="5" ReadOnly Size="Size.Small" />
+                            <MudText Class="text-sm text-gray-500 ml-1">(88)</MudText>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            
+            <MudItem xs="12" sm="6" md="3" Class="flex justify-center">
+                <MudCard Class="max-w-xs">
+                    <MudCardContent>
+                        <div class="relative">
+                            <MudImage Src="path_to_related_product_2" Class="w-full h-48 object-contain" />
+                            <MudBadge Class="absolute top-2 left-2 bg-[#DB4444] text-white">-40%</MudBadge>
+                        </div>
+                        <MudText Typo="Typo.body1" Class="font-semibold mt-2">AK-900 Wired Keyboard</MudText>
+                        <div class="flex gap-2 mt-1">
+                            <MudText Class="text-[#DB4444] font-semibold">$96</MudText>
+                            <MudText Class="text-gray-500 line-through">$160</MudText>
+                        </div>
+                        <div class="flex items-center mt-1">
+                            <MudRating Value="4" ReadOnly Size="Size.Small" />
+                            <MudText Class="text-sm text-gray-500 ml-1">(75)</MudText>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            
+            <MudItem xs="12" sm="6" md="3" Class="flex justify-center">
+                <MudCard Class="max-w-xs">
+                    <MudCardContent>
+                        <div class="relative">
+                            <MudImage Src="path_to_related_product_3" Class="w-full h-48 object-contain" />
+                        </div>
+                        <MudText Typo="Typo.body1" Class="font-semibold mt-2">IPS LCD Gaming Monitor</MudText>
+                        <div class="flex gap-2 mt-1">
+                            <MudText Class="text-[#DB4444] font-semibold">$370</MudText>
+                            <MudText Class="text-gray-500 line-through">$400</MudText>
+                        </div>
+                        <div class="flex items-center mt-1">
+                            <MudRating Value="5" ReadOnly Size="Size.Small" />
+                            <MudText Class="text-sm text-gray-500 ml-1">(98)</MudText>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            
+            <MudItem xs="12" sm="6" md="3" Class="flex justify-center">
+                <MudCard Class="max-w-xs">
+                    <MudCardContent>
+                        <div class="relative">
+                            <MudImage Src="path_to_related_product_4" Class="w-full h-48 object-contain" />
+                            <MudBadge Class="absolute top-2 left-2 bg-[#DB4444] text-white">-6%</MudBadge>
+                        </div>
+                        <MudText Typo="Typo.body1" Class="font-semibold mt-2">RGB liquid CPU Cooler</MudText>
+                        <div class="flex gap-2 mt-1">
+                            <MudText Class="text-[#DB4444] font-semibold">$160</MudText>
+                            <MudText Class="text-gray-500 line-through">$170</MudText>
+                        </div>
+                        <div class="flex items-center mt-1">
+                            <MudRating Value="4" ReadOnly Size="Size.Small" />
+                            <MudText Class="text-sm text-gray-500 ml-1">(85)</MudText>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+    </Section>
+</MudContainer>
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+    public Product? product { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (int.TryParse(Id, out int productId))
+        {
+            product = await ProductService.GetProductByIdAsync(productId);
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/error");
+        }
+    }
+}

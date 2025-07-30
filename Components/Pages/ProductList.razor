@@ -1,46 +1,87 @@
 ﻿@page "/products"
 @page "/products/{Category}"
 @using ECommerceMudblazorWebApp.Models
-@using ECommerceMudblazorWebApp.Services
+@using ECommerceMudblazorWebApp.Services.Cart
 @using ECommerceMudblazorWebApp.Components.Admin.Services
+@using System.Security.Claims
 @inject ICartService CartService
 @inject NavigationManager NavigationManager
 @inject IProductService ProductService
 @inject ICategoryService CategoryService
-
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ISnackbar Snackbar
 
 <PageTitle>Products</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" Class="mb-4 font-bold">@Category</MudText>
 
-    <MudText Typo="Typo.h4" Class="mb-4 font-bold">
-        @Category
-    </MudText>
+    <MudGrid Gutter="Size.Small" Justify="Justify.FlexStart" >
+    @foreach (var product in DisplayedProducts)
+    {
+        <MudItem xs="12" sm="6" md="4" lg="3" Class="md:h-1/4">
+            <MudCard Class="flex flex-col h-full rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                
+                <!-- Image Section -->
+                <div class="relative aspect-[4/3] bg-gray-100">
+                    <MudCardMedia 
+                        Image="@product.ImagePath"
+                        Class="absolute inset-0 w-full h-40 object-contain p-4"
+                        Style="background-color: #f9f9f9;" />
+                </div>
 
-    <MudGrid Gutter="Size.Small" Justify="Justify.FlexStart">
-        @foreach (var product in DisplayedProducts)
-        {
-            <MudItem xs="12" sm="6" md="4" lg="3">
-                <MudCard Class="flex h-full flex-col justify-between p-4 shadow-xl">
-                    <MudCardMedia Image="@product.ImagePath"
-                                Class="h-48"
-                                Height="192"
-                                Title="gaming pc"
-                                Style="object-fit: contain; background-size: contain;" />
-                    <MudCardContent>
-                        <MudText Typo="Typo.h6" Class="font-semibold">@product.Name</MudText>
-                        <MudText Class="text-gray-500">@GetPrimaryCategory(product)</MudText>
-                        <MudText Typo="Typo.subtitle1" Class="mt-2 font-bold">Ksh @product.Price</MudText>
-                    </MudCardContent>
-                    <MudCardActions Class="mt-4">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => AddToCart(product)">
-                            Add to Cart
-                        </MudButton>
-                    </MudCardActions>
-                </MudCard>
-            </MudItem>
-        }
-    </MudGrid>
+                <!-- Product Info -->
+                <MudCardContent Class="flex flex-col flex-grow p-4 space-y-2">
+                    <!-- Category Chip -->
+                    <MudChip T="string" Color="Color.Secondary" Size="Size.Small" Variant="Variant.Outlined">
+                        @GetPrimaryCategory(product)
+                    </MudChip>
+
+                    <!-- Product Name -->
+                    <MudText Typo="Typo.subtitle1" Class="font-semibold line-clamp-2 text-gray-800">
+                        @product.Name
+                    </MudText>
+
+                    <!-- Price Info -->
+                    <MudText Typo="Typo.h6" Class="text-primary font-bold">
+                        Ksh @product.Price.ToString("N0")
+                    </MudText>
+
+                    <!-- Stock Indicator -->
+                    <div class="flex items-center gap-1 text-sm text-gray-600">
+                        <MudIcon Icon="@Icons.Material.Filled.Inventory" Size="Size.Small" />
+                        <span>@(product.StockQuantity > 0 ? "In Stock" : "Out of Stock")</span>
+                    </div>
+                </MudCardContent>
+
+                <!-- Actions -->
+                <MudCardActions Class="p-4 pt-0 flex flex-wrap gap-2">
+                    <MudButton 
+                        Variant="Variant.Outlined" 
+                        Color="Color.Tertiary"
+                        FullWidth="true"
+                        OnClick="@(() => NavigateToDetails(product.Id))"
+                        Class="text-sm">
+                        View Details
+                    </MudButton>
+                    <MudButton 
+                        Variant="Variant.Filled" 
+                        Color="Color.Primary"
+                        FullWidth="true"
+                        StartIcon="@Icons.Material.Filled.AddShoppingCart"
+                        OnClick="@(() => AddToCartAsync(product))"
+                        Disabled="@(product.StockQuantity <= 0)"
+                        Class="text-sm">
+                        Add to Cart
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+</MudGrid>
+
+
 </MudContainer>
 
 @code {
@@ -50,40 +91,56 @@
 
     private List<Product> Products = new();
     private List<Category> Categories = new();
+
     private List<Product> DisplayedProducts => string.IsNullOrEmpty(Category) || Category == "All"
-        ? Products
-        : Products.Where(p => p.ProductCategories.Any(pc => pc.Category.Name.Equals(Category, StringComparison.OrdinalIgnoreCase))).ToList();
+    ? Products
+    : Products.Where(p =>
+    p.ProductCategories.Any(pc =>
+    pc.Category.Name.Equals(Category, StringComparison.OrdinalIgnoreCase)))
+    .ToList();
 
     protected override async Task OnInitializedAsync()
     {
         Products = (await ProductService.GetAllProductsAsync()).ToList();
         Categories = (await CategoryService.GetAllAsync()).ToList();
     }
+
     protected override void OnParametersSet()
     {
-        if (string.IsNullOrEmpty(Category))
-        {
-            Category = "All";
-        }
+        Category ??= "All";
     }
 
-    public string GetPrimaryCategory(Product product)
+    private string GetPrimaryCategory(Product product)
     {
         var matchedCategories = Categories
-            .Where(c => product.ProductCategories.Any(pc => pc.CategoryId == c.Id))
-            .Select(c => c.Name);
+        .Where(c => product.ProductCategories.Any(pc => pc.CategoryId == c.Id))
+        .Select(c => c.Name);
         return matchedCategories.Any() ? string.Join(", ", matchedCategories) : "Uncategorized";
     }
 
-    private void AddToCart(Product product)
+    private void NavigateToDetails(int id)
     {
-        CartService.AddToCart(new CartItem
-        {
-            ProductId = product.Id,
-            Product = product,
-            Quantity = 1
-        });
+        NavigationManager.NavigateTo($"/products/details/{id}");
+    }
 
+    private async Task AddToCartAsync(Product product)
+    {
+        string? guestId = await JSRuntime.InvokeAsync<string>("cartStorage.getGuestId");
+
+        if (string.IsNullOrEmpty(guestId))
+        {
+            guestId = Guid.NewGuid().ToString();
+            await JSRuntime.InvokeVoidAsync("cartStorage.setGuestId", guestId);
+        }
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userId = user.Identity?.IsAuthenticated == true
+            ? user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            : null;
+
+        await CartService.AddToCartAsync(product.Id, 1, userId, guestId);
+        Snackbar.Add($"{product.Name} added to cart", Severity.Success);
         NavigationManager.NavigateTo("/cart");
     }
 

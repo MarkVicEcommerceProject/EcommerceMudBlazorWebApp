@@ -14,8 +14,8 @@
         </MudText>
     </TitleContent>
     <DialogContent>
-        <MudText Typo="Typo.subtitle1">@Product?.Name</MudText>
-        <MudText Typo="Typo.body2">@Product?.Description</MudText>
+        <MudText Typo="Typo.subtitle1">@ItemName</MudText>
+        <MudText Typo="Typo.body2">@ItemDescription</MudText>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="ConfirmDelete" Color="Color.Error" Variant="Variant.Filled">Yes, Delete</MudButton>
@@ -26,18 +26,21 @@
 @code {
     [CascadingParameter] 
     IMudDialogInstance MudDialog { get; set; } = default!;
-    [Parameter] public int ProductId { get; set; }
+    [Parameter] public int ItemId { get; set; }
+    [Parameter] public string? ItemName { get; set; }
+    [Parameter] public string? ItemDescription { get; set; }
+    [Parameter] public EventCallback<int> OnConfirmDelete { get; set; }
 
     private Product? Product;
 
     protected override async Task OnInitializedAsync()
     {
-        Product = await ProductService.GetProductByIdAsync(ProductId);
+        Product = await ProductService.GetProductByIdAsync(ItemId);
     }
 
     private async Task ConfirmDelete()
     {
-        await ProductService.DeleteProductAsync(ProductId);
+        await OnConfirmDelete.InvokeAsync(ItemId);
         Snackbar.Add("Server Deleted", Severity.Success);
         MudDialog.Close(DialogResult.Ok(true));
     }
@@ -47,3 +50,4 @@
         MudDialog.Cancel();
     }
 }
+    

@@ -1,4 +1,4 @@
-namespace ECommerceMudblazorWebApp.Services
+namespace ECommerceMudblazorWebApp.Services.Orders
 {
     using ECommerceMudblazorWebApp.Data;
     using ECommerceMudblazorWebApp.Models;
@@ -65,17 +65,15 @@ namespace ECommerceMudblazorWebApp.Services
         }
     }
 
-    public class EfOrderService : IOrderService
+    public class EfOrderService(IDbContextFactory<ApplicationDbContext> dbContextFactory) : IOrderService
     {
         public event Action? OnChange;
         public Order? CurrentOrder { get; set; }
-        private readonly ApplicationDbContext _db;
-        public EfOrderService(ApplicationDbContext dbContext)
-        {
-            _db = dbContext;
-        }
+        private readonly IDbContextFactory<ApplicationDbContext> _dbContextFactory = dbContextFactory;
+
         public async Task<int> PlaceOrderAsync(Order order)
         {
+            await using var _db = _dbContextFactory.CreateDbContext();
             //starting Transaction
             await using var tx = await _db.Database.BeginTransactionAsync();
             try
@@ -104,6 +102,7 @@ namespace ECommerceMudblazorWebApp.Services
 
         public async Task<Order> GetOrderByIdAsync(int orderId)
         {
+            await using var _db = _dbContextFactory.CreateDbContext();
             return await _db.Orders
                 .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
@@ -113,6 +112,7 @@ namespace ECommerceMudblazorWebApp.Services
 
         public async Task<IEnumerable<Order>> GetOrdersByUserIdAsync(string userId)
         {
+            await using var _db = _dbContextFactory.CreateDbContext();
             return await _db.Orders
                 .Where(o => o.UserId == userId)
                 .Include(o => o.OrderItems)
@@ -123,6 +123,7 @@ namespace ECommerceMudblazorWebApp.Services
 
         public async Task CancelOrderAsync(int orderId)
         {
+            await using var _db = _dbContextFactory.CreateDbContext();
             var order = await _db.Orders.FindAsync(orderId);
             if (order == null) throw new KeyNotFoundException($"Order with ID {orderId} not found.");
 
@@ -144,6 +145,7 @@ namespace ECommerceMudblazorWebApp.Services
 
         public async Task<Order?> GetOrderDetailsAsync(int orderId)
         {
+            await using var _db = _dbContextFactory.CreateDbContext();
             return await _db.Orders
                 .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
@@ -153,6 +155,7 @@ namespace ECommerceMudblazorWebApp.Services
 
         public async Task<IEnumerable<Order>> GetAllOrdersAsync()
         {
+            await using var _db = _dbContextFactory.CreateDbContext();
             return await _db.Orders
                 .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
@@ -161,6 +164,7 @@ namespace ECommerceMudblazorWebApp.Services
         }
         public async Task<bool> UpdateOrderStatusAsync(int orderId, OrderStatus newStatus)
         {
+            await using var _db = _dbContextFactory.CreateDbContext();
             var order = await _db.Orders.FindAsync(orderId);
             if (order == null) throw new KeyNotFoundException($"Order with ID {orderId} not found.");
             using var tx = await _db.Database.BeginTransactionAsync();

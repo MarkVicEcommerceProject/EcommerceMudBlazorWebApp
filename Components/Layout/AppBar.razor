@@ -1,56 +1,47 @@
-﻿@using ECommerceMudblazorWebApp.Services
+﻿@using ECommerceMudblazorWebApp.Services.Cart
 @using MudBlazor
+@using System.Security.Claims
+@implements IDisposable
 @inject NavigationManager NavigationManager
 @inject ICartService CartService
+@inject CartStateService CartState
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider AuthStateProvider
 
-<MudAppBar Elevation="1" Color="Color.Success" Class="h-14">
+<MudAppBar Elevation="1" Class="h-14" Style="background-color: #008000;">
     <div class="font-inter flex w-full items-center justify-between text-lg text-black md:px-4">
-        <!-- Left Section: hamburger + brand -->
+        <!-- Left Section -->
         <div class="flex items-center space-x-2">
             <MudIconButton Icon="@Icons.Material.Filled.Menu"
                            Color="Color.Inherit"
-                           AriaLabel="Open navigation menu"
                            Class="font-inter text-white block md:hidden"
                            OnClick="ToggleDrawerCallback" />
-            <!-- Mobile logo: B.E. (visible on small screens) -->
             <MudNavLink Href="/" Match="NavLinkMatch.All" Class="md:hidden">
                 <MudText Typo="Typo.h6" Class="font-inter cursor-pointer font-bold text-black">
                     B.E.
                 </MudText>
             </MudNavLink>
-
-            <!-- Desktop logo: Full text (visible on medium and up) -->
             <MudNavLink Href="/" Match="NavLinkMatch.All" Class="hidden md:inline">
                 <MudText Typo="Typo.h6" Class="hidden cursor-pointer font-bold text-black">
                     BLAZORED ELECTRONICS
                 </MudText>
             </MudNavLink>
-
         </div>
 
-        <!-- Center Section: desktop nav links (hidden on small) -->
+        <!-- Center Section -->
         <div class="font-inter hidden space-x-4 md:flex">
-            <MudNavLink Href="/" Match="NavLinkMatch.All"
-                        Class="text-xlg font-sans text-black transition-colors hover:text-gray-200">
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Class="text-xlg text-black hover:text-gray-200">
                 Home
             </MudNavLink>
-            <MudNavLink Href="/contact" Class="text-black transition-colors hover:text-gray-200">
-                Contact
-            </MudNavLink>
-            <MudNavLink Href="/about" Class="text-black transition-colors hover:text-gray-200">
-                About
-            </MudNavLink>
-            <MudNavLink Href="/products" Class="text-black transition-colors hover:text-gray-200">
-                Shop
-            </MudNavLink>
+            <MudNavLink Href="/contact" Class="text-black hover:text-gray-200">Contact</MudNavLink>
+            <MudNavLink Href="/about" Class="text-black hover:text-gray-200">About</MudNavLink>
+            <MudNavLink Href="/products" Class="text-black hover:text-gray-200">Shop</MudNavLink>
         </div>
 
-        <!-- Right Section: auth/search (always visible) -->
+        <!-- Right Section -->
         <div class="flex items-center space-x-4">
-            <MudIconButton Icon="@Icons.Material.Filled.Search"
-                           Color="Color.Inherit"
-                           Class="text-black"
-                           AriaLabel="Search" />
+            <MudIconButton Icon="@Icons.Material.Filled.Search" Color="Color.Inherit" Class="text-black" />
+
             <AuthorizeView>
                 <Authorized>
                     <MudNavLink Href="Account/Manage" Icon="@Icons.Material.Filled.Person"
@@ -58,11 +49,14 @@
                         <p class="hidden md:inline">@UserName?.Split('@')[0]</p>
                     </MudNavLink>
 
-                    <MudBadge Content="@(CartService.GetCartItemCount())" Color="Color.Primary" Overlap="true">
+                    <MudBadge BadgeColor="Color.Primary"
+                              Content="@CartState.CartCount"
+                              Visible="@(!IsCartEmpty)"
+                              Overlap="true">
                         <MudIconButton Href="/cart" Icon="@Icons.Material.Filled.ShoppingCart"
-                                        Size="Size.Medium" Class="text-black" />
+                                       Size="Size.Medium" Class="text-black" />
                     </MudBadge>
-                    
+
                     <form action="Account/Logout" method="post">
                         <AntiforgeryToken />
                         <input type="hidden" name="ReturnUrl" value="@CurrentUrl" />
@@ -72,9 +66,15 @@
                                        ButtonType="ButtonType.Submit"
                                        AriaLabel="Logout" />
                     </form>
-                    
                 </Authorized>
+
                 <NotAuthorized>
+                    <MudBadge Content="@CartState.CartCount"
+                              Visible="@(!IsCartEmpty)"
+                              Overlap="true">
+                        <MudIconButton Href="/cart" Icon="@Icons.Material.Filled.ShoppingCart"
+                                       Size="Size.Medium" Class="text-black" />
+                    </MudBadge>
                     <MudNavLink Href="/account/login" Icon="@Icons.Material.Filled.Lock"
                                 IconColor="Color.Inherit" Class="text-white">
                         Login
@@ -84,15 +84,57 @@
         </div>
     </div>
 </MudAppBar>
+
 @code {
     [Parameter] public bool IsAuthenticated { get; set; }
     [Parameter] public string? UserName { get; set; }
     [Parameter] public string? CurrentUrl { get; set; }
     [Parameter] public EventCallback ToggleDrawerCallback { get; set; }
 
+    private string? userId;
+    private bool isAuthenticated;
 
-    private void ToggleDrawer() => ToggleDrawerCallback.InvokeAsync();
+    private bool IsCartEmpty => CartState.CartCount == 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        CartState.OnChange += HandleCartStateChanged;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            isAuthenticated = true;
+            userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            CartState.CartCount = await CartService.GetCartItemCountAsync(userId, guestId: null);
+        }
+        Console.WriteLine(CartState.CartCount);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !isAuthenticated)
+        {
+            var guestId = await JSRuntime.InvokeAsync<string>("cartStorage.getGuestId");
+
+            if (!string.IsNullOrWhiteSpace(guestId))
+            {
+                CartState.CartCount = await CartService.GetCartItemCountAsync(null, guestId);
+                StateHasChanged(); // Only needed for initial render update
+            }
+        }
+    }
+
+    private async Task HandleCartStateChanged()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        CartState.OnChange -= HandleCartStateChanged;
+    }
 }
-using ECommerceMudblazorWebApp.Services;
-#line default
-#line hidden
+

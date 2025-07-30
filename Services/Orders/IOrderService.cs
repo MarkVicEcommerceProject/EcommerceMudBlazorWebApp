@@ -1,4 +1,4 @@
-namespace ECommerceMudblazorWebApp.Services
+namespace ECommerceMudblazorWebApp.Services.Orders
 {
     using ECommerceMudblazorWebApp.Models;
 

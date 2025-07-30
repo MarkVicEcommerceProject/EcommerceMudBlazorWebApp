@@ -11,47 +11,28 @@
     {
         <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="ma-auto" />
     }
-    else if (!isAuthenticated)
+    else if (IsAuthPage && isAuthenticated)
     {
-        @if (IsAuthPage)
-        {
-            <MudGrid Justify="Justify.SpaceBetween" Class="min-h-screen">
-                <MudItem xs="12" md="6">
-                    <MudPaper Class="pa-6">
-                        <img src="images/dl.beatsnoop1.png" alt="Auth Banner" style="width:100%;" />
-                    </MudPaper>
-                </MudItem>
-                <MudItem xs="12" md="6" Class="flex items-center justify-center">
-                    <MudPaper Class="pa-6 w-full">
-                        @Body
-                    </MudPaper>
-                </MudItem>
-            </MudGrid>
-        }
-        else
-        {
-            NavigationManager.NavigateTo("account/login", forceLoad: true);
-        }
+        NavigationManager.NavigateTo("/");
     }
     else
     {
-        <MudLayout>
+        <MudLayout Style="background-color: #e7ebe8;">
             <AppBar ToggleDrawerCallback="ToggleDrawer"
                     IsAuthenticated="isAuthenticated"
                     UserName="@userName"
                     CurrentUrl="@currentUrl" />
 
             <MudDrawer @bind-Open="@drawerOpen"
-                    Variant="@DrawerVariant.Temporary"
-                    Elevation="1"
-                    OverlayAutoClose="true"
-                    Class="mud-theme-default"
-                    >
+                       Variant="@DrawerVariant.Temporary"
+                       Elevation="1"
+                       OverlayAutoClose="true"
+                       Class="bg-gradient-to-br from-green-100 via-white to-gray-200">
 
                 <MudNavMenu>
-                    <MudNavLink Href="/" Match="NavLinkMatch.All">Home</MudNavLink>
-                    <MudNavLink Href="/contact">Contact</MudNavLink>
-                    <MudNavLink Href="/about">About</MudNavLink>
+                    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+                    <MudNavLink Href="/contact" Icon="@Icons.Material.Filled.ContactPage">Contact</MudNavLink>
+                    <MudNavLink Href="/about" Icon="@Icons.Material.Filled.Info">About</MudNavLink>
                     <MudNavLink Href="/account/register">Signup</MudNavLink>
 
                     @if (isAuthenticated)
@@ -59,27 +40,45 @@
                         <MudNavLink Href="Account/Manage" Icon="@Icons.Material.Filled.Person">Profile</MudNavLink>
                         <div class="relative">
                             <MudIconButton Href="/cart" Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Medium">My cart</MudIconButton>
-
                         </div>
                         <form action="Account/Logout" method="post">
                             <AntiforgeryToken />
                             <input type="hidden" name="ReturnUrl" value="@currentUrl" />
                             <MudIconButton Icon="@Icons.Material.Filled.Logout"
-                                        Color="Color.Inherit"
-                                        Class="text-white"
-                                        ButtonType="ButtonType.Submit"
-                                        AriaLabel="Logout" />
+                                           Color="Color.Inherit"
+                                           Class="text-white"
+                                           ButtonType="ButtonType.Submit"
+                                           AriaLabel="Logout" />
                         </form>
                     }
                     else
                     {
                         <MudNavLink Href="/account/login" Icon="@Icons.Material.Filled.Lock">Login</MudNavLink>
+                        <MudNavLink Href="/cart" Icon="@Icons.Material.Filled.ShoppingCart">My Cart</MudNavLink>
                     }
                 </MudNavMenu>
             </MudDrawer>
 
-            <MudMainContent Class="transition-all duration-300 md:pt-16">
-                @Body
+            <MudMainContent Class="transition-all duration-300 md:pt-16" Style="background-color: #e7ebe8;">
+                @if (IsAuthPage && !isAuthenticated)
+                {
+                    <MudGrid Justify="Justify.SpaceBetween" Class="min-h-screen">
+                        <MudItem xs="12" md="6">
+                            <MudPaper Class="pa-6">
+                                <img src="images/dl.beatsnoop1.png" alt="Auth Banner" style="width:100%;" />
+                            </MudPaper>
+                        </MudItem>
+                        <MudItem xs="12" md="6" Class="flex items-center justify-center">
+                            <MudPaper Class="pa-6 w-full">
+                                @Body
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+                }
+                else
+                {
+                    @Body
+                }
             </MudMainContent>
 
             <Footer />
@@ -96,11 +95,10 @@
 
     private string CurrentRoute => NavigationManager.ToBaseRelativePath(NavigationManager.Uri).ToLower();
     private bool IsAuthPage => CurrentRoute.StartsWith("account/login") ||
-                            CurrentRoute.StartsWith("account/register") ||
-                            CurrentRoute.StartsWith("account/forgotpassword") ||
-                            CurrentRoute.StartsWith("account/resendemailconfirmation") ||
-                            CurrentRoute.StartsWith("account/confirmemail");
-
+                                CurrentRoute.StartsWith("account/register") ||
+                                CurrentRoute.StartsWith("account/forgotpassword") ||
+                                CurrentRoute.StartsWith("account/resendemailconfirmation") ||
+                                CurrentRoute.StartsWith("account/confirmemail");
 
     protected override async Task OnInitializedAsync()
     {
@@ -118,28 +116,21 @@
         userName = user.Identity?.Name;
         authChecked = true;
 
-        if (isAuthenticated && IsAuthPage)
-        {
-            NavigationManager.NavigateTo("/");
-        }
-
         StateHasChanged();
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        
         currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
         _ = CheckAuthState();
-        StateHasChanged();
         drawerOpen = false;
+        StateHasChanged();
     }
 
     private void ToggleDrawer()
     {
         drawerOpen = !drawerOpen;
     }
-
 
     public void Dispose()
     {

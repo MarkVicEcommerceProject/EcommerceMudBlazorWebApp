@@ -1,14 +1,27 @@
 ﻿@page "/"
 @using ECommerceMudblazorWebApp.Models
+@using ECommerceMudblazorWebApp.Services.Cart
 @using MudBlazor
 @using ECommerceMudblazorWebApp.Components.Admin.Services
+@using System.Security.Claims
 
 @inject NavigationManager NavigationManager
 @inject IProductService ProductService
+@inject ICartService CartService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Home</PageTitle>
 
-<section class="font-inter mx-auto flex max-w-7xl flex-row gap-4 md:mx-auto md:px-4">
+@if (IsLoading)
+{
+    <div class="flex justify-center mt-20">
+        <MudProgressCircular Color="Color.Tertiary" Size="Size.Large" Indeterminate="true" />
+    </div>
+}
+else
+{
+    <section class="font-inter mx-auto flex max-w-7xl flex-row gap-4 md:mx-auto md:px-4">
 
     <!-- Sidebar Categories -->
     <aside class="hidden w-64 md:block">
@@ -22,7 +35,7 @@
                 <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Medicine</MudLink>
                 <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Sports & Outdoor Electronics</MudLink>
                 <MudLink Href="/products/Kids Electronics" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Kids Electronics</MudLink>
-                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Groceries & Pets</MudLink>
+                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Accessories</MudLink>
                 <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Health & Beauty</MudLink>
             </nav>
         </div>
@@ -241,7 +254,7 @@
         
         @foreach(var category in Categories)
         {
-            <MudLink Href="/products/iphone">
+            <MudLink Href="/products/iphone" Underline="Underline.None">
                 <MudPaper
                     Class="flex min-h-36 cursor-pointer flex-col items-center justify-center p-4 transition-colors duration-200 hover:bg-gray-100"
                     OnClick="@(() => SelectCategory(category.Id))"
@@ -256,7 +269,7 @@
     </div>
 </section>
 
-<section class="mt-10 w-full font-sans">
+<section class="mt-10 w-full font-inter">
     <div class="p-6">
         <div class="mb-4 flex items-center justify-between">
             <div class="ml-4 flex h-10 items-center">
@@ -271,16 +284,16 @@
         <MudGrid Gutter="GutterSize.Small" Justify="Justify.Center" Class="items-center">
             @foreach(var product in Products )
             {
-                <MudItem xs="12" sm="6" md="3" Class="relative flex justify-center" onclick="">
-                    <MudCard Class="w-full cursor-pointer">
+                <MudItem xs="12" sm="6" md="3" Class="relative flex justify-center">
+                    <MudCard Class="w-full cursor-pointer" @onclick="(()=>NavigateToDetails(product.Id))">
 
                         <MudCardMedia Image="@(product.ImageUrl ?? product.ImagePath ?? "./images/gridImage.png")"
                                     Class="h-48"
                                     Height="192"
                                     Title="@product.Name"
                                     Style="object-fit: cover; background-size: 200px;" />
-                        <div class="absolute top-2 right-0 flex flex-col gap-1">
-                            <MudIconButton Icon="@Icons.Material.Filled.FavoriteBorder" Color="Color.Default" />
+                        <div class="absolute top-4 right-0 flex flex-col gap-1">
+                            <MudIconButton Icon="@Icons.Material.Filled.FavoriteBorder" Variant="Variant.Text" Color="Color.Secondary" />
                             <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Default" />
                         </div>
                         <MudCardContent>
@@ -342,51 +355,119 @@
 
     </div>
 </section>
+}
+
+
 
 
 
 @code {
 
-    //MudCarousel control variables
+    // Carousel controls
     private bool arrows = true;
     private bool bullets = true;
     private bool enableSwipeGesture = true;
     private bool autocycle = true;
     private Transition transition = Transition.Slide;
 
-    //categories
+    // Categories
     private int SelectedCategoryIndex = 0;
     private List<Category> Categories = new();
 
-    //Products
+    // Products
     public List<Product> Products = new();
 
-    private string? currentUrl;
+    // State flags
+    private bool _cartMerged = false;
+    private bool IsLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
         // Initialize categories
         Categories = new List<Category>
-        {
+            {
             new Category{Id = 1, Name="iphones",Slug="smartphone"},
             new Category{Id = 2, Name="computers",Slug="computer"},
             new Category{Id = 3, Name="SmartWatch",Slug="watch"},
             new Category{Id = 4, Name="Camera",Slug="camera"},
             new Category{Id = 5, Name="Headphones",Slug="headphones"},
             new Category{Id = 6, Name="Gaming",Slug="gaming"},
-        };
+            };
 
-        Products = (await ProductService.GetAllProductsAsync()).ToList();
-
-        SelectedCategoryIndex = 4; 
+        SelectedCategoryIndex = 4;
     }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                //merging cart
+                await MergeGuestCartIfNeededAsync();
+
+                // Loading products after merging is completed
+                Products = (await ProductService.GetAllProductsAsync()).ToList();
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Error during OnAfterRenderAsync: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
+                StateHasChanged();
+            }
+        }
+    }
+
+
+    private async Task MergeGuestCartIfNeededAsync()
+    {
+        try
+        {
+            // Get or create guestId
+            var guestId = await JSRuntime.InvokeAsync<string>("cartStorage.getGuestId");
+            if (string.IsNullOrWhiteSpace(guestId))
+            {
+                guestId = Guid.NewGuid().ToString();
+                await JSRuntime.InvokeVoidAsync("cartStorage.setGuestId", guestId);
+            }
+
+            // Only merge if not already done
+            if (_cartMerged) return;
+
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrWhiteSpace(userId))
+                {
+                    var merged = await CartService.MergeGuestCartToUserAsync(guestId, userId);
+
+                    if (merged)
+                    {
+                        _cartMerged = true;
+                        await JSRuntime.InvokeVoidAsync("cartStorage.clearGuestId");
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Cart merge failed: {ex.Message}");
+        }
+    }
+
 
     private void SelectCategory(int categoryId)
     {
         SelectedCategoryIndex = categoryId;
     }
 
-    private String GetCategoryIcon(String slug)
+    private string GetCategoryIcon(string slug)
     {
         return slug switch
         {
@@ -400,9 +481,8 @@
         };
     }
 
-    /*private void OnLocationChanged(object sender, LocationChangedEventArgs e)
+    private void NavigateToDetails(int id)
     {
-        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
-        StateHasChanged();
-    }*/
+        NavigationManager.NavigateTo($"/products/details/{id}");
+    }
 }

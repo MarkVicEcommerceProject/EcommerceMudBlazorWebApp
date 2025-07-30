@@ -4,23 +4,29 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceMudblazorWebApp.Components.Admin.Services
 {
-    public class CategoryService(ApplicationDbContext context) : ICategoryService
+    public class CategoryService(IDbContextFactory<ApplicationDbContext> contextFactory) : ICategoryService
     {
-        private readonly ApplicationDbContext _context = context;
+        private readonly IDbContextFactory<ApplicationDbContext> _contextFactory = contextFactory;
 
         public async Task<IReadOnlyList<Category>> GetAllAsync()
         {
-            return await _context.Categories.Include(c=>c.ParentCategory).ThenInclude(c=>c.ChildCategories).ToListAsync();
+            await using var _context = _contextFactory.CreateDbContext();
+            return await _context.Categories
+                                .Include(c => c.ParentCategory)
+                                .Include(c => c.ChildCategories)
+                                .ToListAsync();
         }
 
         public async Task<Category> GetByIdAsync(int id)
         {
+            await using var _context = _contextFactory.CreateDbContext();
             var category = await _context.Categories.FindAsync(id) ?? throw new KeyNotFoundException($"Category with Id {id} not found");
             return category;
         }
 
         public async Task<Category> CreateAsync(Category newCategory)
         {
+            await using var _context = _contextFactory.CreateDbContext();
             using var tx = await _context.Database.BeginTransactionAsync();
             try
             {
@@ -39,6 +45,7 @@ namespace ECommerceMudblazorWebApp.Components.Admin.Services
 
         public async Task<Category> UpdateAsync(int id, Category updatedCategory)
         {
+            await using var _context = _contextFactory.CreateDbContext();
             var existing = await _context.Categories.FindAsync(id) ?? throw new KeyNotFoundException($"Category with Id {id} not found");
             updatedCategory.Id = id;
 
@@ -49,6 +56,7 @@ namespace ECommerceMudblazorWebApp.Components.Admin.Services
 
         public async Task<bool> DeleteAsync(int id)
         {
+            await using var _context = _contextFactory.CreateDbContext();
             var category = await _context.Categories
                 .Include(c => c.ChildCategories)
                 .FirstOrDefaultAsync(c => c.Id == id);
@@ -66,6 +74,7 @@ namespace ECommerceMudblazorWebApp.Components.Admin.Services
 
         public async Task<IReadOnlyList<Category>> GetHierarchyAsync()
         {
+            await using var _context = _contextFactory.CreateDbContext();
             return await _context.Categories
                 .Include(c => c.ChildCategories)
                 .Where(c => c.ParentCategoryId == null)
@@ -74,6 +83,7 @@ namespace ECommerceMudblazorWebApp.Components.Admin.Services
 
         public async Task<IReadOnlyList<Category>> GetChildrenAsync(int parentId)
         {
+            await using var _context = _contextFactory.CreateDbContext();
             return await _context.Categories
                 .Where(c => c.ParentCategoryId == parentId)
                 .ToListAsync();
@@ -96,12 +106,14 @@ namespace ECommerceMudblazorWebApp.Components.Admin.Services
 
         public async Task<Category> GetBySlugAsync(string slug)
         {
+            await using var _context = _contextFactory.CreateDbContext();
             var category = await _context.Categories.FirstOrDefaultAsync(c => c.Slug == slug) ?? throw new KeyNotFoundException($"Category with slug '{slug}' not found");
             return category;
         }
 
         public async Task AssignToProductAsync(int productId, int categoryId)
         {
+            await using var _context = _contextFactory.CreateDbContext();
             var exists = await _context.ProductCategories
                 .AnyAsync(pc => pc.ProductId == productId && pc.CategoryId == categoryId);
             if (exists) return;
@@ -118,6 +130,7 @@ namespace ECommerceMudblazorWebApp.Components.Admin.Services
 
         public async Task RemoveFromProductAsync(int productId, int categoryId)
         {
+            await using var _context = _contextFactory.CreateDbContext();
             var pc = await _context.ProductCategories
                 .FirstOrDefaultAsync(pc => pc.ProductId == productId && pc.CategoryId == categoryId);
 
@@ -130,6 +143,7 @@ namespace ECommerceMudblazorWebApp.Components.Admin.Services
 
         public async Task<IReadOnlyList<Category>> GetByProductAsync(int productId)
         {
+            await using var _context = _contextFactory.CreateDbContext();
             return await _context.ProductCategories
                 .Where(pc => pc.ProductId == productId)
                 .Include(pc => pc.Category)
@@ -139,6 +153,7 @@ namespace ECommerceMudblazorWebApp.Components.Admin.Services
 
         public async Task<IReadOnlyList<Product>> GetProductsByCategoryAsync(int categoryId, bool includeDescendants = true)
         {
+            await using var _context = _contextFactory.CreateDbContext();
             var categoryIds = new List<int> { categoryId };
 
             if (includeDescendants)

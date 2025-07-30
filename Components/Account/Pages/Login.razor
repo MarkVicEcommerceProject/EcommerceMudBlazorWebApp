@@ -4,7 +4,10 @@
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
 @using ECommerceMudblazorWebApp.Data
+@using ECommerceMudblazorWebApp.Services.Cart
 
+@inject ICartService CartService
+@inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
 @inject ILogger<Login> Logger
 @inject NavigationManager NavigationManager
@@ -58,6 +61,9 @@
 </MudGrid>
 
 @code {
+
+
+
     private string? errorMessage;
 
     [CascadingParameter]
@@ -86,6 +92,16 @@
         if (result.Succeeded)
         {
             Logger.LogInformation("User logged in.");
+
+            var user = await UserManager.FindByEmailAsync(Input.Email);
+            if (user != null)
+            {
+                if(await UserManager.IsInRoleAsync(user,"Admin"))
+                {
+                    RedirectManager.RedirectTo("admin");
+                }
+            }
+
             RedirectManager.RedirectTo(ReturnUrl);
         }
         else if (result.RequiresTwoFactor)

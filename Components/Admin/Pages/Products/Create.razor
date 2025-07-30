@@ -193,8 +193,7 @@
     }
 
     private void RemoveCategory(int id)
-    {
-        
+    {      
         var updated = Input.SelectedCategoryIds.ToHashSet();
         if(updated.Remove(id)){
             Input.SelectedCategoryIds = updated;

@@ -1,146 +1,380 @@
 ﻿@page "/checkout"
 @inject IJSRuntime JSRuntime
-
 @using System.ComponentModel.DataAnnotations
 @using System.Security.Claims
 @using ECommerceMudblazorWebApp.Models
-@using ECommerceMudblazorWebApp.Services
+@using ECommerceMudblazorWebApp.Services.Cart
+@using ECommerceMudblazorWebApp.Services.Orders
+@using Microsoft.AspNetCore.Authorization
+@implements IBrowserViewportObserver
 
+@attribute [Authorize]
 @inject ICartService CartService
 @inject IOrderService OrderService
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
-
+@inject ISnackbar Snackbar
 
 <PageTitle>Checkout</PageTitle>
 
-<EditForm Model="Input" OnValidSubmit="HandleValidSubmitAsync">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-    <MudContainer MaxWidth="MaxWidth.Large" Class="font-inter md:mt-10">
-        <MudText Typo="Typo.h4" Class="mb-6 font-bold">Billing Details</MudText>
+<MudContainer MaxWidth="MaxWidth.Large" Class="font-inter py-8">
+    <!-- Progress Stepper -->
+    <MudStepper Class="mb-8" CenterLabels="@ShouldCenterLabels" ShowResetButton ActiveIndex="activeStep" ActiveIndexChanged="@(index => activeStep = index)">
+        <ConnectorTemplate Context="step">
+            <div class="mud-stepper-nav-connector">
+                @{
+                    int value = step.Completed ? 100 : 0;
+                    <MudProgressLinear Indeterminate="@(step.IsActive)" Striped Value="value" Min="0" Max="100" Color="Color.Success" Style="height: 2px; background-color: #d4ddeb; border-radius: 2px;" />
+                }
+            </div>
+        </ConnectorTemplate>
+        <ChildContent>
+            <MudStep Title="Shipping" Icon="@Icons.Material.Filled.LocalShipping">
+                <MudText Typo="Typo.subtitle2" Class="text-gray-500">Enter your shipping details</MudText>
+            </MudStep>
+            <MudStep Title="Payment" Icon="@Icons.Material.Filled.Payment">
+                <MudText Typo="Typo.subtitle2" Class="text-gray-500">Select payment method</MudText>
+            </MudStep>
+        <MudStep Title="Review" Icon="@Icons.Material.Filled.Checklist">
+            <MudText Typo="Typo.subtitle2" Class="text-gray-500">Confirm your order</MudText>
+        </MudStep>
+        </ChildContent>
+        
+    </MudStepper>
 
-        <section class="mb-10 flex flex-col gap-y-4 md:flex-row md:gap-x-6">
-            
-            <!-- Left: Billing Form -->
-            <section class="md:w-2/3">
-                <MudGrid>
-                    <MudItem xs="12">
-                        <MudText Class="font-light">First Name</MudText>
-                        <MudTextField T="string" Label="First Name" @bind-Value="Input.FirstName" Required />
-                        <ValidationMessage For="@(() => Input.FirstName)" />
-                    </MudItem>
-                    <MudItem xs="12">
-                        <MudText Class="font-light">Email Address</MudText>
-                        <MudTextField T="string" Label="Email Address" @bind-Value="Input.Email" Required />
-                        <ValidationMessage For="@(() => Input.Email)" />
-                    </MudItem>
-                    <MudItem xs="12">
-                        <MudText Class="font-light">Street Address</MudText>
-                        <MudTextField T="string" Label="Street Address" @bind-Value="Input.StreetAddress" Required />
-                        <ValidationMessage For="@(() => Input.StreetAddress)" />
-                    </MudItem>
-                    <MudItem xs="12">
-                        <MudText Class="font-light">City</MudText>
-                        <MudTextField T="string" Label="City" @bind-Value="Input.City" Required />
-                        <ValidationMessage For="@(() => Input.City)" />
-                    </MudItem>
-                    <MudItem xs="12">
-                        <MudText Class="font-light">Postal Code</MudText>
-                        <MudTextField T="string" Label="Postal Code" @bind-Value="Input.PostalCode" Required />
-                        <ValidationMessage For="@(() => Input.PostalCode)" />
-                    </MudItem>
-                </MudGrid>
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Left Column - Form -->
+        <div class="w-full lg:w-7/12">
+            <EditForm Model="Input" OnValidSubmit="HandleValidSubmitAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
 
-                <MudCheckBox @bind-Value="Input.SaveShippingInfo" Color="Color.Secondary" Class="mt-4">
-                    Save this Information for faster Checkout next time
-                </MudCheckBox>
-            </section>
-
-            <!-- Right: Order Summary -->
-            <MudStack Class="md:w-1/3">
-                <!-- Cart Summary -->
-                <div class="w-full rounded-lg bg-gray-100 p-4 shadow-md">
-                    @foreach (var item in CartItems)
-                    {
-                        <div class="my-4 flex items-center justify-between">
-                            <div class="flex items-center gap-4">
-                                <img src="@item.Product.ImagePath" alt="@item.Product.Name" class="h-16 w-16 object-contain" />
-                                <MudText>@item.Product.Name</MudText>
-                                <MudText>(@item.Quantity)</MudText>
-                            </div>
-                            <MudText>Ksh @item.Product.Price.ToString("N2")</MudText>
+                <!-- Shipping Information (Step 1) -->
+                @if (activeStep == 0)
+                {
+                    <MudPaper Elevation="2" Class="pa-6 rounded-xl mb-6">
+                        <MudText Typo="Typo.h5" Class="mb-4 font-bold">Shipping Information</MudText>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <MudTextField T="string" Label="First Name" 
+                                        @bind-Value="Input.FirstName"
+                                        For="@(() => Input.FirstName)" 
+                                        Required="true"
+                                        Variant="Variant.Outlined"
+                                        Class="mb-4" />
+                            
+                            <MudTextField T="string" Label="Last Name" 
+                                        @bind-Value="Input.LastName" 
+                                        For="@(() => Input.LastName)" 
+                                        Required="true"
+                                        Variant="Variant.Outlined"
+                                        Class="mb-4" />
                         </div>
-                    }
-                </div>
+                        
+                        <MudTextField T="string" Label="Email Address" 
+                                    @bind-Value="Input.Email"
+                                    For="@(() => Input.Email)" 
+                                    Required="true"
+                                    Variant="Variant.Outlined"
+                                    Class="mb-4" />
+                        
+                        <MudTextField T="string" Label="Street Address" 
+                                    @bind-Value="Input.StreetAddress" 
+                                        For="@(() => Input.StreetAddress)"
+                                    Required="true"
+                                    Variant="Variant.Outlined"
+                                    Lines="2"
+                                    Class="mb-4" />
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <MudTextField T="string" Label="City" 
+                                        @bind-Value="Input.City" 
+                                        For="@(() => Input.City)"
+                                        Required="true"
+                                        Variant="Variant.Outlined"
+                                        Class="mb-4" />
+                            
+                            <MudTextField T="string" Label="Postal Code" 
+                                        @bind-Value="Input.PostalCode"
+                                        For="@(() => Input.PostalCode)" 
+                                        Required="true"
+                                        Variant="Variant.Outlined"
+                                        Class="mb-4" />
+                        </div>
+                        
+                        <MudCheckBox @bind-Value="Input.SaveShippingInfo" Color="Color.Secondary" Class="mt-2">
+                            Save this Information for faster Checkout next time
+                        </MudCheckBox>
+                        
+                        <div class="flex justify-end mt-6">
+                            <MudButton Variant="Variant.Filled" 
+                                       Color="Color.Primary" 
+                                       OnClick="NextStep"
+                                       Class="px-8 py-4">
+                                Continue to Payment
+                            </MudButton>
+                        </div>
+                    </MudPaper>
+                }
 
-                <!-- Pricing Summary -->
-                <div class="mt-4 rounded-lg p-4 shadow-md">
-                    <div class="mt-3 flex justify-between">
-                        <MudText>Subtotal:</MudText>
-                        <MudText>Ksh @CartItems.Sum(i => i.Product.Price * i.Quantity).ToString("N2")</MudText>
+                <!-- Payment Method (Step 2) -->
+                
+                @if (activeStep == 1)
+                {
+                    <MudPaper Elevation="2" Class="pa-6 rounded-xl mb-6">
+                        <MudText Typo="Typo.h5" Class="mb-4  text-center font-bold">Payment Method</MudText>
+                        
+                        <MudRadioGroup T="string" Label="Select Payment Method" 
+                                    @bind-Value="PaymentMethod" 
+                                    Class="mb-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 md:mx-auto md:max-w-2xl gap-4 md:gap-0">
+                                <!-- Credit Card Option -->
+                                <MudRadio Value="@("CreditCard")" T="string" Color="Color.Primary" Class="flex">
+                                    <div class="flex md:flex-col gap-x-2 items-center w-full p-4 rounded-lg hover:bg-blue-50 transition-colors">
+                                        <MudIcon Icon="@Icons.Material.Filled.CreditCard" 
+                                                Class="text-4xl mb-2 text-blue-600" />
+                                        <MudText>Credit Card</MudText>
+                                    </div>
+                                </MudRadio>
+                                
+                                <!-- PayPal Option -->
+                                <MudRadio Value="@("PayPal")" T="string" Color="Color.Primary" Class="d-flex">
+                                    <div class="flex md:flex-col gap-x-2 items-center justify-center w-full p-4 rounded-lg hover:bg-blue-50 transition-colors">
+                                        <MudIcon Icon="@Icons.Custom.Brands.MicrosoftWindows" 
+                                                Class="text-4xl mb-2 text-blue-600" />
+                                        <MudText>PayPal</MudText>
+                                    </div>
+                                </MudRadio>
+                                
+                                <!-- Cash on Delivery Option -->
+                                <MudRadio Value="@("CashOnDelivery")" T="string" Color="Color.Primary" Class="d-flex">
+                                    <div class="flex md:flex-col gap-x-2 items-center w-full p-4 rounded-lg hover:bg-blue-50 transition-colors">
+                                        <MudIcon Icon="@Icons.Material.Filled.Money" 
+                                                Class="text-4xl mb-2 text-blue-600" />
+                                        <MudText>Cash on Delivery</MudText>
+                                    </div>
+                                </MudRadio>
+                            </div>
+                        </MudRadioGroup>
+                        
+                        @if (PaymentMethod == "PayPal")
+                        {
+                            <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                                <MudText Class="mb-3 font-medium">Pay with PayPal</MudText>
+                                <div id="paypal-button-container" class="paypal-button-container mt-4"></div>
+                                <p id="result-message" class="mt-2 text-sm text-gray-500"></p>
+                            </div>
+                        }
+                        
+                        <div class="flex justify-between mt-6">
+                            <MudButton Variant="Variant.Outlined" 
+                                       Color="Color.Default" 
+                                       OnClick="PrevStep"
+                                       Class="px-6 py-3">
+                                Back
+                            </MudButton>
+                            
+                            <MudButton Variant="Variant.Filled" 
+                                       Color="Color.Primary" 
+                                       OnClick="NextStep"
+                                       Class="px-8 py-3">
+                                Review Order
+                            </MudButton>
+                        </div>
+                    </MudPaper>
+                }
+
+                <!-- Review Order (Step 3) -->
+                @if (activeStep == 2)
+                {
+                    <MudPaper Elevation="2" Class="pa-6 rounded-xl mb-6">
+                        <MudText Typo="Typo.h5" Class="mb-4 font-bold">Review Your Order</MudText>
+                        
+                        <!-- Shipping Info Review -->
+                        <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                            <MudText Typo="Typo.h6" Class="mb-2 font-medium">Shipping Information</MudText>
+                            <div class="grid grid-cols-2 gap-2">
+                                <MudText Class="text-gray-600">Name:</MudText>
+                                <MudText>@Input.FirstName @Input.LastName</MudText>
+                                
+                                <MudText Class="text-gray-600">Email:</MudText>
+                                <MudText>@Input.Email</MudText>
+                                
+                                <MudText Class="text-gray-600">Address:</MudText>
+                                <MudText>@Input.StreetAddress, @Input.City, @Input.PostalCode</MudText>
+                                
+                                <MudText Class="text-gray-600">Payment:</MudText>
+                                <MudText>
+                                    @(PaymentMethod switch {
+                                        "CreditCard" => "Credit Card",
+                                        "PayPal" => "PayPal",
+                                        "CashOnDelivery" => "Cash on Delivery",
+                                        _ => ""
+                                    })
+                                </MudText>
+                            </div>
+                        </div>
+                        
+                        <!-- Order Items -->
+                        <div class="mb-4">
+                            <MudText Typo="Typo.h6" Class="mb-3 font-medium">Order Items</MudText>
+                            <div class="space-y-3">
+                                @foreach (var item in CartItems)
+                                {
+                                    <div class="flex items-center justify-between py-3 border-b">
+                                        <div class="flex items-center gap-3">
+                                            <img src="@item.Product.ImagePath" 
+                                                 alt="@item.Product.Name" 
+                                                 class="h-16 w-16 rounded-lg object-cover" />
+                                            <div>
+                                                <MudText>@item.Product.Name</MudText>
+                                                <MudText Class="text-sm text-gray-500">Quantity: @item.Quantity</MudText>
+                                            </div>
+                                        </div>
+                                        <MudText>Ksh @((item.Product.Price * item.Quantity).ToString("N2"))</MudText>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        
+                        <!-- Coupon Section -->
+                        <div class="mt-6">
+                            <MudText Typo="Typo.h6" Class="mb-3 font-medium">Apply Coupon</MudText>
+                            <div class="flex gap-2">
+                                <MudTextField T="string" 
+                                              Placeholder="Enter coupon code" 
+                                              Variant="Variant.Outlined" 
+                                              Class="flex-grow" />
+                                <MudButton Variant="Variant.Outlined" 
+                                           Color="Color.Secondary"
+                                           Class="h-[56px]">
+                                    Apply
+                                </MudButton>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between mt-6">
+                            <MudButton Variant="Variant.Outlined" 
+                                       Color="Color.Default" 
+                                       OnClick="PrevStep"
+                                       Class="px-6 py-3">
+                                Back
+                            </MudButton>
+                            
+                            <MudButton ButtonType="ButtonType.Submit"
+                                       Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Class="px-8 py-3 font-bold"
+                                       Style="background: linear-gradient(135deg, #db4444 0%, #c13535 100%);">
+                                Place Order
+                            </MudButton>
+                        </div>
+                    </MudPaper>
+                }
+            </EditForm>
+        </div>
+
+        <!-- Right Column - Order Summary -->
+        <div class="w-full lg:w-5/12">
+            <div class="sticky top-4">
+                <MudPaper Elevation="3" Class="pa-6 rounded-xl bg-gradient-to-br from-gray-50 to-white">
+                    <MudText Typo="Typo.h5" Class="mb-4 font-bold">Order Summary</MudText>
+                    
+                    <!-- Items List -->
+                    <div class="max-h-96 overflow-y-auto pr-2">
+                        @foreach (var item in CartItems)
+                        {
+                            <div class="flex items-center justify-between py-3 border-b">
+                                <div class="flex items-center gap-3">
+                                    <img src="@item.Product.ImagePath" 
+                                         alt="@item.Product.Name" 
+                                         class="h-16 w-16 rounded-lg object-cover border" />
+                                    <div>
+                                        <MudText Class="font-medium">@item.Product.Name</MudText>
+                                        <MudText Class="text-sm text-gray-500">Ksh @item.Product.Price.ToString("N2") × @item.Quantity</MudText>
+                                    </div>
+                                </div>
+                                <MudText Class="font-medium">Ksh @((item.Product.Price * item.Quantity).ToString("N2"))</MudText>
+                            </div>
+                        }
                     </div>
-
-                    <div class="mt-3 flex justify-between border-t pt-2">
-                        <MudText>Shipping:</MudText>
-                        <MudText>Free</MudText>
+                    
+                    <!-- Pricing Summary -->
+                    <div class="mt-6 space-y-3">
+                        <div class="flex justify-between">
+                            <MudText>Subtotal:</MudText>
+                            <MudText>Ksh @CartItems.Sum(i => i.Product.Price * i.Quantity).ToString("N2")</MudText>
+                        </div>
+                        
+                        <div class="flex justify-between">
+                            <MudText>Shipping:</MudText>
+                            <MudText>Free</MudText>
+                        </div>
+                        
+                        <div class="flex justify-between pt-3 border-t">
+                            <MudText Class="font-bold">Estimated Tax:</MudText>
+                            <MudText Class="font-bold">Ksh 0.00</MudText>
+                        </div>
+                        
+                        <div class="flex justify-between pt-3 border-t">
+                            <MudText Class="text-lg font-bold">Total:</MudText>
+                            <MudText Class="text-lg font-bold text-red-600">
+                                Ksh @(CartItems.Sum(i => i.Product.Price * i.Quantity).ToString("N2"))
+                            </MudText>
+                        </div>
                     </div>
-
-                    <div class="mt-3 mb-3 flex justify-between border-t pt-2 font-bold">
-                        <MudText>Total:</MudText>
-                        <MudText>Ksh @CartItems.Sum(i => i.Product.Price * i.Quantity).ToString("N2")</MudText>
+                    
+                    <!-- Security Badges -->
+                    <div class="mt-6 pt-4 border-t">
+                        <MudText Class="text-sm text-gray-500 mb-2">Secure Payment</MudText>
+                        <div class="flex items-center gap-3">
+                            <MudIcon Icon="@Icons.Custom.Brands.MicrosoftWindows" Class="text-2xl text-blue-900" />
+                            <MudIcon Icon="@Icons.Custom.Brands.MicrosoftWindows" Class="text-2xl text-red-800" />
+                            <MudIcon Icon="@Icons.Custom.Brands.MicrosoftWindows" Class="text-2xl text-blue-600" />
+                            <MudIcon Icon="@Icons.Custom.Brands.MicrosoftWindows" Class="text-2xl text-green-600" />
+                        </div>
+                        <MudText Class="text-xs text-gray-400 mt-3">
+                            Your payment information is encrypted and securely processed.
+                        </MudText>
                     </div>
-                </div>
-
-                <!-- Payment Method -->
-                <div class="mt-6">
-                    <MudRadioGroup T="string" Label="Payment Method" Class="md:flex md:flex-col" @bind-Value="PaymentMethod">
-                        <MudRadio Value="@("CreditCard")" T="string" Color="Color.Secondary" Label="Credit Card" />
-                        <MudRadio Value="@("PayPal")" T="string" Color="Color.Secondary" Label="PayPal" />
-                        <MudRadio Value="@("CashOnDelivery")" T="string" Color="Color.Secondary" Label="Cash on Delivery" />
-                    </MudRadioGroup>
-
-                    <div class="mt-2 flex flex-wrap items-center gap-x-3">
-                        <MudIcon Icon="@Icons.Material.Filled.Payment" />
-                        <MudIcon Icon="@Icons.Material.Filled.Payment" />
-                        <MudIcon Icon="@Icons.Material.Filled.MoneyOff" />
+                </MudPaper>
+                
+                <!-- Support Card -->
+                <MudPaper Elevation="1" Class="mt-4 pa-4 rounded-xl bg-blue-50 flex items-start gap-3">
+                    <MudIcon Icon="@Icons.Material.Filled.SupportAgent" Class="text-blue-600 mt-1" />
+                    <div>
+                        <MudText Class="font-medium">Need help with your order?</MudText>
+                        <MudText Class="text-sm">Contact our support team 24/7</MudText>
+                        <MudButton Variant="Variant.Text" 
+                                   Color="Color.Primary" 
+                                   Size="Size.Small"
+                                   EndIcon="@Icons.Material.Filled.Chat"
+                                   Class="mt-2">
+                            Chat with us
+                        </MudButton>
                     </div>
-
-                    @if(PaymentMethod == "PayPal")
-                    {
-                        <div id="paypal-button-container" class="paypal-button-container mt-4"></div>
-                        <p id="result-message"></p>
-                    }
-
-                </div>
-
-                <!-- Coupon -->
-                <div class="mt-6 flex max-w-sm gap-2">
-                    <MudTextField T="string" Placeholder="Coupon Code" Variant="Variant.Outlined" Class="flex-grow" />
-                    <MudButton Variant="Variant.Filled" Color="Color.Secondary">Apply Coupon</MudButton>
-                </div>
-
-                <!-- Submit Button -->
-                <MudButton 
-                    ButtonType="ButtonType.Submit"
-                    Variant="Variant.Filled"
-                    Color="Color.Default"
-                    Style="background-color:#DB4444;color:white"
-                    Class="mt-6 w-full">
-                    Place Order
-                </MudButton>
-            </MudStack>
-        </section>
-    </MudContainer>
-</EditForm>
+                </MudPaper>
+            </div>
+        </div>
+    </div>
+</MudContainer>
 
 @code {
+ // Step management
+    private int activeStep = 0;
+    private void NextStep() => activeStep = Math.Min(2, activeStep + 1);
+    private void PrevStep() => activeStep = Math.Max(0, activeStep - 1);
 
-    [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = new();
+    private bool ShouldCenterLabels => CurrentBreakpoint <= Breakpoint.Sm;
+    private Breakpoint CurrentBreakpoint { get; set; } = Breakpoint.Lg;
 
-    private ICollection<CartItem> CartItems => CartService.ShoppingCart.Items;
+    [Inject] private IBrowserViewportService BrowserViewportService { get; set; }
 
+    // Form Management
+    [SupplyParameterFromForm] private InputModel Input { get; set; } = new();
+    private List<CartItem> CartItems = new();
+
+    // Payment method management
     private bool _shouldInitPayPal;
     private string _paymentMethod = "CashOnDelivery";
     private string PaymentMethod
@@ -152,12 +386,17 @@
             _paymentMethod = value;
             if (value == "PayPal")
             {
-                // flag that we need to init the buttons once the DOM updates
-                Console.WriteLine(PaymentMethod);
                 _shouldInitPayPal = true;
                 StateHasChanged();
             }
         }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        PaymentMethod = "CashOnDelivery";
+        await LoadCart();
+        await BrowserViewportService.SubscribeAsync(this, fireImmediately: true);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -165,47 +404,96 @@
         if (_shouldInitPayPal)
         {
             _shouldInitPayPal = false;
-            await JSRuntime.InvokeVoidAsync("paypalIntegration.initButtons",
-                                            "api/orders",
-                                            "api/orders/{orderID}/capture");
+            try 
+            {
+                await JSRuntime.InvokeVoidAsync("paypalIntegration.initButtons",
+                    "api/orders",
+                    "api/orders/{orderID}/capture");
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"PayPal initialization failed: {ex.Message}");
+            }
         }
+        await base.OnAfterRenderAsync(firstRender);
     }
 
-    protected override void OnInitialized()
+    public async ValueTask DisposeAsync() => await BrowserViewportService.UnsubscribeAsync(this);
+
+    Guid IBrowserViewportObserver.Id { get; } = Guid.NewGuid();
+
+    ResizeOptions IBrowserViewportObserver.ResizeOptions { get; } = new()
     {
-        PaymentMethod = "Cash on Delivery";
+        ReportRate = 250,
+        NotifyOnBreakpointOnly = true
+    };
+
+    Task IBrowserViewportObserver.NotifyBrowserViewportChangeAsync(BrowserViewportEventArgs args)
+    {
+        var newBreakpoint = args.Breakpoint;
+        if (CurrentBreakpoint != newBreakpoint)
+        {
+            CurrentBreakpoint = newBreakpoint;
+            return InvokeAsync(StateHasChanged);
+        }
+        return Task.CompletedTask;
+    }
+
+    private async Task LoadCart()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userId = user.FindFirst(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            NavigationManager.NavigateTo("/login");
+            return;
+        }
+
+        CartItems = await CartService.GetCartItemsAsync(userId, null);
+        StateHasChanged();
     }
 
     private async Task HandleValidSubmitAsync()
     {
-        Console.WriteLine($"Order placed for {Input.FirstName} at {Input.StreetAddress}, {Input.City}");
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         var userId = user.FindFirst(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-        Console.WriteLine($"User ID: {userId}");
-        
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            NavigationManager.NavigateTo("/login");
+            return;
+        }
+
+        CartItems = await CartService.GetCartItemsAsync(userId, null);
+
         var order = new Order
         {
             UserId = userId,
             ShippingAddress = Input.StreetAddress,
             PaymentMethod = PaymentMethod,
-            OrderItems = CartItems.Select(ci => new OrderItem {
+            OrderItems = CartItems.Select(ci => new OrderItem
+            {
                 ProductId = ci.ProductId,
                 Quantity = ci.Quantity,
-                UnitPrice = ci.UnitPrice,
+                UnitPrice = ci.Product.Price,
             }).ToList()
         };
 
         await OrderService.PlaceOrderAsync(order);
-        CartService.ClearCart();
-        NavigationManager.Refresh();
-        //NavigationManager.NavigateTo("/order-confirmation");
+        Snackbar.Add("Order placed successfully!", Severity.Success);
+        await CartService.ClearCartAsync(userId, null);
+        NavigationManager.NavigateTo("/order-confirmation");
     }
 
     private sealed class InputModel
     {
         [Required(ErrorMessage = "First Name is required.")]
         public string FirstName { get; set; } = string.Empty;
+
+        public string LastName { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Email is required.")]
         [EmailAddress(ErrorMessage = "Invalid email address.")]

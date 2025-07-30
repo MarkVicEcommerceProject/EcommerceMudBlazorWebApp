@@ -1,0 +1,186 @@
+@page "/admin/products/edit/{id:int}"
+@using ECommerceMudblazorWebApp.Components.Admin.Services
+@using ECommerceMudblazorWebApp.Models
+@inject IProductService ProductService
+@inject ICategoryService CategoryService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+
+<PageTitle>Edit Product</PageTitle>
+
+<MudPaper Class="p-4 mx-auto mt-6" Style="max-width: 700px;">
+    <MudText Typo="Typo.h5" Class="mb-4">Edit Product</MudText>
+
+    <EditForm Model="inputModel" OnValidSubmit="@HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <MudTextField Label="Product Name" @bind-Value="inputModel.Name" Required="true" />
+        <MudNumericField T="decimal" Label="Price" @bind-Value="inputModel.Price" Required="true" Adornment="Adornment.Start" AdornmentText="KES" />
+        <MudTextField Label="Description" @bind-Value="inputModel.Description" Required="true" Lines="3" />
+        <MudNumericField T="int" Label="Stock Quantity" @bind-Value="inputModel.StockQuantity" Required="true" />
+        
+        <MudSelect T="int" 
+                Label="Select Categories" 
+                MultiSelection="true" 
+                @bind-SelectedValues="inputModel.SelectedCategoryIds"
+                ToStringFunc="@(id => categories?.FirstOrDefault(c => c.Id == id)?.Name ?? string.Empty)"> 
+            @if (categories != null)
+            {
+                @foreach (var category in categories)
+                {
+                    <MudSelectItem T="int" Value="@category.Id">@category.Name</MudSelectItem>
+                }
+            }
+        </MudSelect>
+        
+        <MudTextField Label="Image Path" @bind-Value="product.ImagePath" />
+        
+        <!-- Optionally upload a new image -->
+        <MudFileUpload T="IBrowserFile"
+                    @ref="_fileUpload"
+                    Accept=".png,.jpg,.jpeg"
+                    @bind-Files="inputModel.File"
+                    MaxFileSize="5242880"
+                    OnFilesChanged="OnFilesChanged">
+            <ActivatorContent>
+                <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.UploadFile">Upload Image</MudButton>
+            </ActivatorContent>
+        </MudFileUpload>
+
+        <MudButton Type="Submit" Color="Color.Success" Variant="Variant.Filled" Class="mt-4">
+            Update Product
+        </MudButton>
+        <MudButton  Color="Color.Secondary" Variant="Variant.Text" Class="mt-4 ml-2">Cancel</MudButton>
+    </EditForm>
+</MudPaper>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private InputModel inputModel { get; set; } = new();
+    private Product product;
+    private List<Category> categories = new();
+    private MudFileUpload<IBrowserFile> _fileUpload;
+    private IBrowserFile _selectedFile;
+    private const long maxFileSize = 5 * 1024 * 1024;
+    private string oldImagePath;
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        errorMessage = string.Empty;
+        product = await ProductService.GetProductByIdAsync(Id);
+        categories = (await CategoryService.GetAllAsync()).ToList();
+
+        if (product == null || categories.Count == 0)
+        {
+            Snackbar.Add("Product not found or no categories available.", Severity.Error);
+            NavigationManager.NavigateTo("/admin/products");
+            return;
+        }
+
+        inputModel = new InputModel
+        {
+            Name = product.Name,
+            Price = product.Price,
+            Description = product.Description,
+            StockQuantity = product.StockQuantity,
+            ImagePath = product.ImagePath,
+            SelectedCategoryIds = product.ProductCategories != null
+                ? new HashSet<int>(product.ProductCategories.Select(c => c.CategoryId))
+                : new HashSet<int>(),
+
+            File = null
+        };
+
+        oldImagePath = product.ImagePath;
+    }
+
+    private void OnFilesChanged(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+            if (!new[] { ".jpg", ".jpeg", ".png" }.Contains(ext)) return;
+            if (file.Size > maxFileSize)
+            {
+                errorMessage = "File size exceeds the maximum limit of 5MB.";
+                Snackbar.Add(errorMessage, Severity.Error);
+                return;
+            }
+
+            _selectedFile = file;
+            inputModel.File = file;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        product.Name = inputModel.Name;
+        product.Price = inputModel.Price;
+        product.Description = inputModel.Description;
+        product.StockQuantity = inputModel.StockQuantity;
+
+        if (_selectedFile != null)
+        {
+            try
+            {
+                var ext = Path.GetExtension(_selectedFile.Name).ToLowerInvariant();
+                var fileName = $"{Guid.NewGuid()}{ext}";
+
+                var uploadFolder = Path.Combine("wwwroot", "images", "uploads");
+                if (!Directory.Exists(uploadFolder))
+                    Directory.CreateDirectory(uploadFolder);
+
+                var savePath = Path.Combine(uploadFolder, fileName);
+
+                // Delete old file
+                if (!string.IsNullOrWhiteSpace(oldImagePath))
+                {
+                    var fullOldPath = Path.Combine("wwwroot", oldImagePath.TrimStart('/'));
+                    if (System.IO.File.Exists(fullOldPath))
+                        System.IO.File.Delete(fullOldPath);
+                }
+
+                using var stream = new FileStream(savePath, FileMode.Create);
+                await _selectedFile.OpenReadStream(maxFileSize).CopyToAsync(stream);
+
+                product.ImagePath = $"/images/uploads/{fileName}";
+            }
+            catch (Exception ex)
+            {
+                errorMessage = "Image saving failed.";
+                Console.WriteLine($"Image upload error: {ex.Message}");
+                return;
+            }
+        }
+        else
+        {
+            product.ImagePath = oldImagePath;
+        }
+
+        try
+        {
+            await ProductService.UpdateProductAsync(product, inputModel.SelectedCategoryIds);
+            Snackbar.Add("Product updated successfully!", Severity.Success);
+            NavigationManager.NavigateTo("/admin/products");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Update failed.";
+            Console.WriteLine($"Update error: {ex.Message}");
+        }
+    }
+
+
+    private sealed class InputModel{
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public string Description { get; set; } = string.Empty;
+        public int StockQuantity { get; set; }
+        public string ImagePath { get; set; } = string.Empty;
+        public IEnumerable<int> SelectedCategoryIds { get; set; } = new HashSet<int>();
+        public IBrowserFile? File { get; set; }
+    }
+}

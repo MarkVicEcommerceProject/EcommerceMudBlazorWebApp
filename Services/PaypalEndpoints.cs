@@ -8,6 +8,8 @@ using Order = ECommerceMudblazorWebApp.Models.Order;
 using OrderStatus = ECommerceMudblazorWebApp.Models.OrderStatus;
 using PaypalServerSdk.Standard.Controllers;
 using ECommerceMudblazorWebApp.Models;
+using ECommerceMudblazorWebApp.Services.Cart;
+using ECommerceMudblazorWebApp.Services.Orders;
 
 namespace ECommerceMudblazorWebApp.Services
 {
@@ -31,7 +33,7 @@ namespace ECommerceMudblazorWebApp.Services
                 var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(userId)) return Results.Unauthorized();
 
-                var cartItems = cartService.ShoppingCart.Items;
+                var cartItems = await cartService.GetCartItemsAsync(userId,null);
                 if (cartItems == null || cartItems.Count == 0)
                 {
                     return Results.BadRequest("Cart is empty.");

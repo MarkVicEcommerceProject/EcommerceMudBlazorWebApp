@@ -4,31 +4,38 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceMudblazorWebApp.Components.Admin.Services
 {
-    public class ProductService(ApplicationDbContext context) : IProductService
+    public class ProductService(IDbContextFactory<ApplicationDbContext> contextFactory) : IProductService
     {
-        private readonly ApplicationDbContext _context = context;
+        private readonly IDbContextFactory<ApplicationDbContext> _contextFactory = contextFactory;
 
         public async Task<IEnumerable<Product>> GetAllProductsAsync()
         {
-            return await _context.Products.Include(p => p.ProductCategories).ToListAsync();
+            using var context = _contextFactory.CreateDbContext();
+            return await context.Products
+                                .Include(p => p.ProductCategories)
+                                .ToListAsync();
         }
 
         public async Task<Product> GetProductByIdAsync(int id)
         {
-            return await _context.Products.Include(p => p.ProductCategories)
-                                          .FirstOrDefaultAsync(p => p.Id == id);
+            using var context = _contextFactory.CreateDbContext();
+            return await context.Products
+                                .Include(p => p.ProductCategories)
+                                .FirstOrDefaultAsync(p => p.Id == id);
         }
 
         public async Task CreateProductAsync(Product product)
         {
-            using var tx = await _context.Database.BeginTransactionAsync();
+            using var context = _contextFactory.CreateDbContext();
+            using var tx = await context.Database.BeginTransactionAsync();
+
             try
             {
                 var firstCategoryName = "Default";
                 if (product.ProductCategories != null && product.ProductCategories.Count != 0)
                 {
                     var firstCategoryId = product.ProductCategories.First().CategoryId;
-                    var category = await _context.Categories.FindAsync(firstCategoryId);
+                    var category = await context.Categories.FindAsync(firstCategoryId);
                     firstCategoryName = category?.Name ?? "Default";
                 }
 
@@ -37,25 +44,24 @@ namespace ECommerceMudblazorWebApp.Components.Admin.Services
                 product.CreatedAt = DateTime.UtcNow;
                 product.UpdatedAt = DateTime.UtcNow;
 
-                // Detach the join-rows temporarily
+                // Temporarily detach categories
                 var categories = product.ProductCategories?.ToList() ?? new List<ProductCategory>();
                 product.ProductCategories.Clear();
 
-                // Insert the product
-                _context.Products.Add(product);
-                await _context.SaveChangesAsync();
+                context.Products.Add(product);
+                await context.SaveChangesAsync();
 
-                // Now insert each join-row with the real product.Id
+                // Add join entries
                 foreach (var pc in categories)
                 {
-                    _context.ProductCategories.Add(new ProductCategory
+                    context.ProductCategories.Add(new ProductCategory
                     {
                         ProductId = product.Id,
                         CategoryId = pc.CategoryId
                     });
                 }
-                await _context.SaveChangesAsync();
 
+                await context.SaveChangesAsync();
                 await tx.CommitAsync();
             }
             catch
@@ -67,34 +73,33 @@ namespace ECommerceMudblazorWebApp.Components.Admin.Services
 
         public async Task UpdateProductAsync(Product product, IEnumerable<int> newCategoryIds)
         {
-            using var tx = await _context.Database.BeginTransactionAsync();
+            using var context = _contextFactory.CreateDbContext();
+            using var tx = await context.Database.BeginTransactionAsync();
+
             try
             {
-                product.UpdatedAt = DateTime.UtcNow;
+                var existing = await context.Products
+                                            .Include(p => p.ProductCategories)
+                                            .FirstOrDefaultAsync(p => p.Id == product.Id)
+                              ?? throw new Exception("Product not found");
 
-                // 1) Update the product’s scalars
-                _context.Products.Update(product);
-                await _context.SaveChangesAsync();
+                // Update fields
+                context.Entry(existing).CurrentValues.SetValues(product);
+                existing.UpdatedAt = DateTime.UtcNow;
 
-                // 2) Refresh category assignments
-                var existing = await _context.ProductCategories
-                    .Where(pc => pc.ProductId == product.Id)
-                    .ToListAsync();
+                // Update categories
+                context.ProductCategories.RemoveRange(existing.ProductCategories);
 
-                // Remove old
-                _context.ProductCategories.RemoveRange(existing);
-
-                // Add new
                 foreach (var catId in newCategoryIds)
                 {
-                    _context.ProductCategories.Add(new ProductCategory
+                    context.ProductCategories.Add(new ProductCategory
                     {
                         ProductId = product.Id,
                         CategoryId = catId
                     });
                 }
-                await _context.SaveChangesAsync();
 
+                await context.SaveChangesAsync();
                 await tx.CommitAsync();
             }
             catch
@@ -103,16 +108,21 @@ namespace ECommerceMudblazorWebApp.Components.Admin.Services
                 throw;
             }
         }
-
 
         public async Task DeleteProductAsync(int id)
         {
-            using var tx = await _context.Database.BeginTransactionAsync();
+            using var context = _contextFactory.CreateDbContext();
+            using var tx = await context.Database.BeginTransactionAsync();
+
             try
             {
-                var product = await GetProductByIdAsync(id) ?? throw new KeyNotFoundException($"Product with ID {id} not found.");
-                _context.Products.Remove(product);
-                await _context.SaveChangesAsync();
+                var product = await context.Products
+                                           .Include(p => p.ProductCategories)
+                                           .FirstOrDefaultAsync(p => p.Id == id)
+                              ?? throw new KeyNotFoundException($"Product with ID {id} not found.");
+
+                context.Products.Remove(product);
+                await context.SaveChangesAsync();
                 await tx.CommitAsync();
             }
             catch
@@ -120,15 +130,13 @@ namespace ECommerceMudblazorWebApp.Components.Admin.Services
                 await tx.RollbackAsync();
                 throw;
             }
-
         }
-        
+
         public async Task<string> GenerateSKUAsync(string category, string name)
         {
-            
-            var sku = $"{category.Substring(0, 3).ToUpper()}-{name.Substring(0, 3).ToUpper()}-{Guid.NewGuid().ToString().Substring(0, 4).ToUpper()}";
-            return sku;
+            // This method doesn't require DbContext
+            var sku = $"{category[..3].ToUpper()}-{name[..3].ToUpper()}-{Guid.NewGuid().ToString()[..4].ToUpper()}";
+            return await Task.FromResult(sku);
         }
-        
     }
 }

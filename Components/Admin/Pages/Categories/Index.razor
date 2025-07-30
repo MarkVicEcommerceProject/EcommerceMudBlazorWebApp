@@ -2,6 +2,8 @@
 @using ECommerceMudblazorWebApp.Components.Admin.Services
 @using ECommerceMudblazorWebApp.Models
 @inject ICategoryService CategoryService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 @inject NavigationManager Nav
 
 <PageTitle>Categories</PageTitle>
@@ -36,12 +38,12 @@
             <MudTd DataLabel="Name">@context.Name</MudTd>
             <MudTd DataLabel="Slug">@context.Slug</MudTd>
             <MudTd DataLabel="Parent" Class="text-center">@(context.ParentCategory?.Name ?? "—")</MudTd>
-            <MudTd DataLabel="Child categories">@string.Join(", ", context.ChildCategories?.Select(c => c.Name)) </MudTd>
+            <MudTd DataLabel="Child categories">@(string.Join(", ", context.ChildCategories?.Select(c => c.Name)) ?? "-")</MudTd>
 
             <MudTd>
                 <MudIconButton Icon="@Icons.Material.Filled.Delete"
                             Color="Color.Error"
-                            OnClick="@(() => DeleteCategory(context.Id))" />
+                            OnClick="@((e) => openDialogAsync(context.Id, context.Name, context.Description))" />
             </MudTd>
         </RowTemplate>
     </MudTable>
@@ -55,20 +57,36 @@
         ? _categories
         : _categories.Where(c => c.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)).ToList();
 
+    private async Task openDialogAsync(int categoryId, string name, string description)
+    {
+        var parameters = new DialogParameters
+        {
+            {nameof(DeleteDialog.ItemId), categoryId },
+            {nameof(DeleteDialog.ItemName), name },
+            {nameof(DeleteDialog.ItemDescription), description },
+            {nameof(DeleteDialog.OnConfirmDelete),EventCallback.Factory.Create<int>(this,DeleteCategoryAsync)}
+        };
 
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium };
+
+        var dialogReference = await DialogService.ShowAsync<DeleteDialog>("Delete Category", parameters, options);
+
+        var result = await dialogReference.Result;
+        if (!result.Canceled)
+        {
+            // Optionally refresh the list or navigate
+            Snackbar.Add("Category deleted successfully.", Severity.Success);
+            Nav.NavigateTo("/admin/categories", forceLoad: true);
+        }
+    }
     protected override async Task OnInitializedAsync()
     {
         _categories = (await CategoryService.GetAllAsync()).ToList();
     }
 
-    private async Task DeleteCategory(int id)
+    private async Task DeleteCategoryAsync(int id)
     {
-        var success = await CategoryService.DeleteAsync(id);
-        if (success)
-        {
-            _categories = (await CategoryService.GetAllAsync()).ToList();
-            StateHasChanged();
-        }
+        await CategoryService.DeleteAsync(id);
     }
 
 }

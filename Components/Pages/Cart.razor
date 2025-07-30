@@ -1,114 +1,233 @@
-﻿@using ECommerceMudblazorWebApp.Models
-@using ECommerceMudblazorWebApp.Services
-@inject NavigationManager NavigationManager
+﻿@page "/cart"
+@using ECommerceMudblazorWebApp.Models
+@using ECommerceMudblazorWebApp.Services.Cart
+@using System.Security.Claims
 @inject ICartService CartService
-@page "/cart"
+@inject CartStateService CartState
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>Shopping Cart</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="font-inter mt-4 rounded-lg shadow-md">
-    <MudText Typo="Typo.h4" Class="mb-4 font-bold">
-        Shopping Cart
-    </MudText>
+<MudContainer MaxWidth="MaxWidth.Large" Class="font-inter mt-4">
+    <MudText Typo="Typo.h4" Class="mb-6 font-bold text-gray-800">Your Shopping Cart</MudText>
 
-    <section class="flex flex-col gap-y-4">
-        <MudTable Items="FilteredItems" T="CartItem" FixedFooter="true" Hover="true">
-            <ToolBarContent>
-                <MudText Typo="Typo.subtitle1" Class="font-semibold">
-                    Total Items: @CartService.GetCartItemCount()
-                </MudText>
-                <MudSpacer />
-                <MudTextField T="string" @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start"
-                    AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-            </ToolBarContent>
-            <HeaderContent>
-                <MudTh>Product</MudTh>
-                <MudTh>Price</MudTh>
-                <MudTh>Quantity</MudTh>
-                <MudTh>Total</MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd class="flex items-center gap-4">
-                    <img src="@(context.Product.ImagePath)" alt="@context.Product.Name"
-                        class="h-16 w-16 rounded object-cover" />
-                    <MudText>@context.Product.Name</MudText>
-                </MudTd>
-                <MudTd>Ksh @context.Product.Price.ToString("N2")</MudTd>
-                <MudTd>
-                    <MudNumericField T="int" Value="context.Quantity" ValueChanged="@(q => UpdateQuantity(context.ProductId, q))"
-                        Min="1" Max="@(context.Product.StockQuantity)"
-                        Immediate="true" Variant="Variant.Outlined" />
-                </MudTd>
-                <MudTd>Ksh @((context.Product.Price * context.Quantity).ToString("N2"))</MudTd>
-                <MudTd>
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error"
-                        OnClick="() => CartService.RemoveFromCart(context.ProductId)" />
-                </MudTd>
-            </RowTemplate>
-            
-        </MudTable>
-        <div class="mt-4 flex items-center justify-evenly">
-            <MudButton Variant="Variant.Outlined" Color="Color.Primary"
-                OnClick="@(() => NavigationManager.NavigateTo("/products"))">
-                Return to Shop
-            </MudButton>
-            
-            <MudButton Variant="Variant.Filled" Color="Color.Error"
-                 OnClick="@(() => CartService.ClearCart())">
-                 Clear Cart
-            </MudButton>
-            
-            <MudButton Color="Color.Default" OnClick="@(()=> NavigationManager.Refresh())">Update Cart</MudButton>
+    @if (cartItems == null)
+    {
+        <div class="flex justify-center py-12">
+            <MudProgressCircular Indeterminate="true" Size="Size.Large" Color="Color.Primary" />
         </div>
-    </section>
-
-    <div class="mt-10 flex flex-wrap items-start justify-between gap-6">
-
-        <div class="mt-6 flex max-w-sm gap-2">
-            <MudTextField T="string" Placeholder="Coupon Code" Variant="Variant.Outlined" Class="flex-grow" />
-            <MudButton Variant="Variant.Filled" Color="Color.Secondary">Apply Coupon</MudButton>
+    }
+    else if (!cartItems.Any())
+    {
+        <div class="flex flex-col items-center py-12 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Size="Size.Large" Class="text-gray-400 mb-4 text-6xl" />
+            <MudText Typo="Typo.h5" Class="mb-2 font-medium text-gray-700">Your cart is empty</MudText>
+            <MudText Class="mb-6 text-gray-500 max-w-md">Looks like you haven't added any items yet</MudText>
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       OnClick="@(() => NavigationManager.NavigateTo("/products"))"
+                       Class="px-8 py-4 rounded-lg">
+                Continue Shopping
+            </MudButton>
         </div>
-        <div class="w-1/2 rounded-sm bg-white p-4 shadow-md md:grow">
-            <MudText Typo="Typo.h6" Class="mb-3 font-bold">Cart Total</MudText>
+    }
+    else
+    {
+        <div class="flex flex-col gap-6 lg:flex-row">
+            <!-- Cart Items Section -->
+            <div class="lg:w-7/12">
+                <div class="bg-white rounded-xl shadow-sm pa-4 pa-md-6 md:p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                        <MudText Typo="Typo.subtitle1" Class="font-semibold text-gray-700">
+                            Total Items: @CartState.CartCount
+                        </MudText>
+                        <MudTextField T="string" @bind-Value="searchString" 
+                                    Placeholder="Search items..."
+                                    Adornment="Adornment.Start" 
+                                    AdornmentIcon="@Icons.Material.Filled.Search"
+                                    IconSize="Size.Medium" 
+                                    Class="w-full sm:w-64"
+                                    Variant="Variant.Outlined" />
+                    </div>
 
-            <div class="my-3 flex justify-between">
-                <MudText>Subtotal:</MudText>
-                <MudText>Ksh @CartService.ShoppingCart.Items.Sum(i => i.Product.Price * i.Quantity)</MudText>
+                    <div class="space-y-4">
+                        @foreach (var item in filteredItems)
+                        {
+                            <MudPaper Class="p-4 transition-all hover:shadow-md rounded-lg" Elevation="0">
+                                <div class="flex flex-col sm:flex-row gap-4">
+                                    <img src="@item.Product.ImagePath" alt="@item.Product.Name" 
+                                         class="h-24 w-24 rounded-lg object-cover self-center" />
+                                    
+                                    <div class="flex-1">
+                                        <div class="flex justify-between">
+                                            <MudText Class="font-medium text-gray-800">@item.Product.Name</MudText>
+                                            <MudIconButton Icon="@Icons.Material.Filled.Close" 
+                                                          Color="Color.Default" 
+                                                          OnClick="@(() => RemoveItem(item.ProductId))"
+                                                          Class="self-start -mt-2 -mr-2" />
+                                        </div>
+                                        
+                                        <div class="mt-2 flex flex-wrap items-center gap-4">
+                                            <MudText Class="font-medium text-gray-700">Ksh @item.Product.Price.ToString("N2")</MudText>
+                                            
+                                            <div class="flex items-center gap-2">
+                                                <MudText Class="text-gray-600 text-sm hidden sm:block">Quantity:</MudText>
+                                                <MudNumericField T="int" Value="@item.Quantity"
+                                                             ValueChanged="@(q => UpdateQuantity(item.ProductId, q))"
+                                                             Min="1" Max="@item.Product.StockQuantity"
+                                                             Immediate="true" 
+                                                             Variant="Variant.Outlined"
+                                                             Class="w-28"
+                                                             InputClass="text-center" />
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mt-3 flex justify-between items-center">
+                                            <MudText Class="text-gray-500 text-sm">Stock: @item.Product.StockQuantity</MudText>
+                                            <MudText Class="font-semibold text-gray-800">
+                                                Ksh @((item.Product.Price * item.Quantity).ToString("N2"))
+                                            </MudText>
+                                        </div>
+                                    </div>
+                                </div>
+                            </MudPaper>
+                        }
+                    </div>
+                </div>
+
+                <div class="mt-6 flex flex-wrap justify-center gap-4">
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Primary"
+                               OnClick="@(() => NavigationManager.NavigateTo("/products"))"
+                               Class="px-6 py-3 rounded-lg">
+                        <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="mr-2" />
+                        Continue Shopping
+                    </MudButton>
+                    
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Error" 
+                               OnClick="ClearCart"
+                               Class="px-6 py-3 rounded-lg">
+                        <MudIcon Icon="@Icons.Material.Filled.Delete" Class="mr-2" />
+                        Clear Cart
+                    </MudButton>
+                </div>
             </div>
 
-            <div class="my-3 flex justify-between">
-                <MudText>Shipping:</MudText>
-                <MudText>Free</MudText>
+            <!-- Order Summary Section -->
+            <div class="lg:w-5/12">
+                <div class="sticky top-4">
+                    <div class="bg-white rounded-xl shadow-sm pa-4 pa-md-6 md:p-6">
+                        <MudText Typo="Typo.h6" Class="mb-4 font-bold text-gray-800">Order Summary</MudText>
+                        
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <MudText Class="text-gray-600">Subtotal:</MudText>
+                                <MudText>Ksh @cartItems.Sum(i => i.Product.Price * i.Quantity).ToString("N2")</MudText>
+                            </div>
+                            
+                            <div class="flex justify-between">
+                                <MudText Class="text-gray-600">Shipping:</MudText>
+                                <MudText>Free</MudText>
+                            </div>
+                            
+                            <div class="pt-3 mt-3 border-t border-gray-200">
+                                <div class="flex justify-between">
+                                    <MudText Class="font-semibold text-gray-800">Total:</MudText>
+                                    <MudText Class="font-semibold text-lg text-gray-800">
+                                        Ksh @cartItems.Sum(i => i.Product.Price * i.Quantity).ToString("N2")
+                                    </MudText>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <MudButton Href="/checkout"
+                                   Disabled="@(!cartItems.Any())"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   FullWidth="true"
+                                   Class="py-4 rounded-lg text-base">
+                                Proceed to Checkout
+                            </MudButton>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 bg-white rounded-xl shadow-sm pa-4 pa-md-6 md:p-6">
+                        <MudText Typo="Typo.subtitle2" Class="mb-3 font-medium text-gray-700">Apply Discount Code</MudText>
+                        <div class="flex gap-2">
+                            <MudTextField T="string" Placeholder="Enter coupon" 
+                                      Variant="Variant.Outlined" 
+                                      Class="flex-grow" />
+                            <MudButton Variant="Variant.Outlined" 
+                                   Color="Color.Secondary"
+                                   Class="whitespace-nowrap">
+                                Apply
+                            </MudButton>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <div class="mt-3 flex justify-between border-t pt-2 font-bold">
-                <MudText>Total:</MudText>
-                <MudText>Ksh @CartService.ShoppingCart.Items.Sum(i => i.Product.Price * i.Quantity)</MudText>
-            </div>
-
-            <MudButton Href="/checkout" Color="Color.Default" Class="@($" {(!CartItems.Any() ? "hidden cursor-not-allowed" : "")} mt-4 w-full")" Style="background-color: #DB4444;color: white;">
-                Proceed to Checkout
-            </MudButton>
-
-
         </div>
-    </div>
-
-    
+    }
 </MudContainer>
 
-
 @code {
-    private string searchString1 { get; set; } = string.Empty;
-    private ICollection<CartItem> CartItems => CartService.ShoppingCart.Items;
-    private ICollection<CartItem> FilteredItems => string.IsNullOrWhiteSpace(searchString1) ?
-    CartItems :
-    CartItems.Where(item => item.Product.Name.Contains(searchString1, StringComparison.OrdinalIgnoreCase)).ToList();
+    private string? userId;
+    private string? guestId;
+    private List<CartItem> cartItems = new();
+    private string searchString = string.Empty;
 
-    private void UpdateQuantity(int productId, int quantity)
+    private IEnumerable<CartItem> filteredItems =>
+        string.IsNullOrWhiteSpace(searchString)
+            ? cartItems
+            : cartItems.Where(item =>
+                item.Product.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        CartService.UpdateQuantity(productId, quantity);
-        StateHasChanged();
+        if (firstRender)
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                userId = user.FindFirst(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            }
+            else
+            {
+                guestId = await JSRuntime.InvokeAsync<string>("cartStorage.getGuestId");
+            }
+
+            await LoadCart();
+            StateHasChanged();
+        }
     }
 
+    private async Task LoadCart()
+    {
+        cartItems = await CartService.GetCartItemsAsync(userId, guestId);
+        CartState.CartCount = cartItems.Sum(item => item.Quantity);
+    }
+
+    private async Task UpdateQuantity(int productId, int quantity)
+    {
+        await CartService.UpdateQuantityAsync(productId, quantity,userId,guestId);
+        await LoadCart();
+    }
+
+    private async Task RemoveItem(int productId)
+    {
+        await CartService.RemoveFromCartAsync(productId,userId,guestId);
+        await LoadCart();
+    }
+
+    private async Task ClearCart()
+    {
+        await CartService.ClearCartAsync(userId,guestId);
+        await LoadCart();
+    }
 }

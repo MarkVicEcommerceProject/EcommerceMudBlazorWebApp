@@ -1,10 +1,12 @@
 ﻿@page "/admin/products"
 @using ECommerceMudblazorWebApp.Components.Admin.Services
+@using ECommerceMudblazorWebApp.Components.Admin.Shared
 @using ECommerceMudblazorWebApp.Models
 @attribute [Authorize(Roles = "Admin")]
-@inject IProductService productService
+@inject IProductService ProductService
 @inject NavigationManager NavigationManager
 @inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <PageTitle>Product Management</PageTitle>
 
@@ -30,15 +32,22 @@
             <MudTd DataLabel="Product Name">@context.Name</MudTd>
             <MudTd DataLabel="Price">Ksh. @context.Price.ToString("N2")</MudTd>
             <MudTd DataLabel="Actions" Class="flex justify-center align-middle">
-                <MudButton Href="@($"/admin/products/details/{context.Id}")" Class="mud-button mud-button-filled">
-                    View Details
-                </MudButton>
-                <MudButton Href="@($"/admin/products/edit/{context.Id}")" Class="mud-button mud-button-filled">
-                    Edit
-                </MudButton>
-                <MudButton onclick="@((e)=> openDialogAsync(context.Id))" Variant="Variant.Filled" Color="Color.Error">
-                    Delete
-                </MudButton>
+                <MudTooltip Text="View Product Details">
+                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Href="@($"/admin/products/details/{context.Id}")">
+                        View
+                    </MudIconButton>
+                </MudTooltip>
+                <MudTooltip Text="Edit Product" Color="Color.Info">
+                    <MudIconButton Href="@($"/admin/products/edit/{context.Id}")" Icon="@Icons.Material.Filled.Edit" Color="Color.Success">
+                        Edit
+                    </MudIconButton>
+                </MudTooltip>
+                <MudTooltip Text="Delete Product" Color="Color.Error">
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" onclick="@((e)=> openDialogAsync(context.Id,context.Name,context.Description))" Color="Color.Error">
+                        Delete
+                    </MudIconButton>
+                </MudTooltip>
+                
             </MudTd>
         </RowTemplate>
         <PagerContent>
@@ -55,28 +64,36 @@
         ? products
         : products.Where(p => p.Name.Contains(searchString1, StringComparison.OrdinalIgnoreCase)).ToList();
 
-    private async Task openDialogAsync(int productId)
+    private async Task openDialogAsync(int productId,string name,string description)
     {
         var parameters = new DialogParameters
         {
-            { nameof(DeleteProductDialog.ProductId), productId }
+            {nameof(DeleteDialog.ItemId), productId },
+            {nameof(DeleteDialog.ItemName), name },
+            {nameof(DeleteDialog.ItemDescription), description },
+            {nameof(DeleteDialog.OnConfirmDelete),EventCallback.Factory.Create<int>(this,DeleteProductAsync)}
         };
 
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium };
 
-        var dialogReference = await DialogService.ShowAsync<DeleteProductDialog>("Delete Product", parameters, options);
+        var dialogReference = await DialogService.ShowAsync<DeleteDialog>("Delete Product", parameters, options);
 
         var result = await dialogReference.Result;
         if (!result.Canceled)
         {
             // Optionally refresh the list or navigate
+            Snackbar.Add("Product deleted successfully.", Severity.Success);
             NavigationManager.NavigateTo("/admin/products", forceLoad: true);
         }
     }
 
     protected override async Task OnInitializedAsync()
     {
-        products = (await productService.GetAllProductsAsync()).ToList();
+        products = (await ProductService.GetAllProductsAsync()).ToList();
+    }
+    private async Task DeleteProductAsync(int id)
+    {
+        await ProductService.DeleteProductAsync(id);
     }
 
 

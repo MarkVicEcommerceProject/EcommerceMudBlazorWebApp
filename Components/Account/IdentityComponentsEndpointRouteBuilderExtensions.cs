@@ -3,6 +3,7 @@ using System.Text.Json;
 using ECommerceMudblazorWebApp.Components.Account.Pages;
 using ECommerceMudblazorWebApp.Components.Account.Pages.Manage;
 using ECommerceMudblazorWebApp.Data;
+using ECommerceMudblazorWebApp.Services.Cart;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http.Extensions;
@@ -43,8 +44,11 @@ namespace Microsoft.AspNetCore.Routing
             accountGroup.MapPost("/Logout", async (
                 ClaimsPrincipal user,
                 [FromServices] SignInManager<ApplicationUser> signInManager,
+                [FromServices] CartStateService cartState,
                 [FromForm] string returnUrl) =>
             {
+                cartState.CartCount = 0;
+                await cartState.NotifyStateChangedAsync();
                 await signInManager.SignOutAsync();
                 return TypedResults.LocalRedirect($"~/{returnUrl}");
             });
