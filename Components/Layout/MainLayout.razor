@@ -45,10 +45,10 @@
                             <AntiforgeryToken />
                             <input type="hidden" name="ReturnUrl" value="@currentUrl" />
                             <MudIconButton Icon="@Icons.Material.Filled.Logout"
-                                           Color="Color.Inherit"
-                                           Class="text-white"
-                                           ButtonType="ButtonType.Submit"
-                                           AriaLabel="Logout" />
+                                        Color="Color.Inherit"
+                                        Class="text-white"
+                                        ButtonType="ButtonType.Submit"
+                                        AriaLabel="Logout" />
                         </form>
                     }
                     else
@@ -59,12 +59,12 @@
                 </MudNavMenu>
             </MudDrawer>
 
-            <MudMainContent Class="transition-all duration-300 md:pt-16" Style="background-color: #e7ebe8;">
+            <MudMainContent Class=" transition-all duration-300 md:pt-16" Style="background-color: #e7ebe8;">
                 @if (IsAuthPage && !isAuthenticated)
                 {
                     <MudGrid Justify="Justify.SpaceBetween" Class="min-h-screen">
                         <MudItem xs="12" md="6">
-                            <MudPaper Class="pa-6">
+                            <MudPaper Class="pa-6 w-full">
                                 <img src="images/dl.beatsnoop1.png" alt="Auth Banner" style="width:100%;" />
                             </MudPaper>
                         </MudItem>

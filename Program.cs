@@ -54,26 +54,6 @@ builder.Services.AddScoped<CartStateService>();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    var roles = new[] { "Admin", "User", "Guest" };
-    foreach (var role in roles)
-    {
-        if (!await roleManager.RoleExistsAsync(role))
-        {
-            await roleManager.CreateAsync(new IdentityRole(role));
-        }
-    }
-
-    var user = await userManager.FindByEmailAsync("Markgichora7@gmail.com");
-    if(user != null && !await userManager.IsInRoleAsync(user, "Admin"))
-    {
-        await userManager.AddToRoleAsync(user, "Admin");
-    }
-}
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

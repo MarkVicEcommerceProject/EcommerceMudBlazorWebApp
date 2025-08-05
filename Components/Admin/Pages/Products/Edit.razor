@@ -8,10 +8,16 @@
 
 <PageTitle>Edit Product</PageTitle>
 
-<MudPaper Class="p-4 mx-auto mt-6" Style="max-width: 700px;">
+@if(product==null || categories.Count == 0)
+{
+<MudProgressCircular Indeterminate="true" />
+}
+else
+{
+    <MudPaper Class="p-4 mx-auto mt-6" Style="max-width: 700px;">
     <MudText Typo="Typo.h5" Class="mb-4">Edit Product</MudText>
 
-    <EditForm Model="inputModel" OnValidSubmit="@HandleValidSubmit">
+    <EditForm Model="inputModel" OnValidSubmit="HandleValidSubmit">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
@@ -34,7 +40,7 @@
             }
         </MudSelect>
         
-        <MudTextField Label="Image Path" @bind-Value="product.ImagePath" />
+        <MudTextField Label="Image Path" @bind-Value="inputModel.ImagePath" />
         
         <!-- Optionally upload a new image -->
         <MudFileUpload T="IBrowserFile"
@@ -48,12 +54,13 @@
             </ActivatorContent>
         </MudFileUpload>
 
-        <MudButton Type="Submit" Color="Color.Success" Variant="Variant.Filled" Class="mt-4">
+        <MudStaticButton FormAction="FormAction.Submit" Color="Color.Success" Variant="Variant.Filled" Class="mt-4">
             Update Product
-        </MudButton>
-        <MudButton  Color="Color.Secondary" Variant="Variant.Text" Class="mt-4 ml-2">Cancel</MudButton>
+        </MudStaticButton>
+        <MudButton Href="/admin/products" Color="Color.Secondary" Variant="Variant.Text" Class="mt-4 ml-2">Cancel</MudButton>
     </EditForm>
 </MudPaper>
+}
 
 @code {
     [Parameter] public int Id { get; set; }

@@ -42,10 +42,9 @@ else
     </aside>
 
     <!-- Hero Carousel Section -->
-    <div class="flex-1">
+    <div class="flex-1 h-60 md:h-auto">
         <MudCarousel Class="mud-width-full min-h-52 md:h-full" ShowArrows="@arrows" ShowBullets="@bullets" EnableSwipeGesture="@enableSwipeGesture" AutoCycle="@autocycle" TData="object">
 
-            <!-- Carousel Item 1 -->
             <MudCarouselItem Transition="transition">
                 <div class="relative flex h-full w-full overflow-hidden bg-black p-8 text-white md:rounded-lg">
                     <div class="z-10 flex w-1/2 flex-col justify-center gap-2">
@@ -66,7 +65,6 @@ else
                 </div>
             </MudCarouselItem>
 
-            <!-- Carousel Item 2 (Duplicate Content) -->
             <MudCarouselItem Transition="transition">
                 <div class="relative flex h-full w-full overflow-hidden rounded-lg bg-black p-8 text-white">
                     <div class="z-10 flex w-1/2 flex-col justify-center gap-2">
@@ -92,22 +90,16 @@ else
     </div>
 </section>
 
-<section class="font-inter mt-10 w-full">
-    <!-- Flash Sales Section -->
- 
-    <div class="mb-10 flex flex-col gap-4">
-        <!-- First row - Today's label -->
-        <div class="flex items-center">
-            <div class="mr-2 h-6 w-2 bg-[#DB4444]"></div>
-            <MudText Typo="Typo.h6" Style="color:#DB4444" Class="text-c font-semibold">Today's</MudText>
-        </div>
+    <section class="font-inter mt-10 w-full">
+        <!-- Flash Sales Header -->
+        <div class="mb-6 flex flex-col gap-4">
+            <div class="flex items-center">
+                <div class="mr-2 h-6 w-2 bg-[#DB4444]"></div>
+                <MudText Typo="Typo.h6" Style="color:#DB4444" Class="text-c font-semibold">Today's</MudText>
+            </div>
 
-        <!-- Second row - Flash sales content -->
-        <div class="flex w-full flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
-            <!-- Left section - Flash sales text and timer -->
-            <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-6">
+            <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-6 md:mx-3">
                 <h3 class="text-xl font-bold md:text-2xl">Flash Sales</h3>
-
                 <div class="flex items-center">
                     <span class="pr-2 font-semibold md:pr-4">Ends In:</span>
                     <div class="flex items-center gap-2 md:gap-3">
@@ -120,118 +112,64 @@ else
                         <div class="rounded bg-black px-2 py-1 text-sm text-white md:text-base">56</div>
                     </div>
                 </div>
-            </div> <!-- ✅ closing the left section properly -->
-
-            <!-- Right section - Arrows -->
-            <div class="flex w-full justify-end md:w-auto">
-                <div class="flex gap-2">
-                    <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Class="text-black hover:bg-gray-100"
-                        Size="Size.Small" />
-                    <MudIconButton Icon="@Icons.Material.Filled.ArrowForward" Class="text-black hover:bg-gray-100"
-                        Size="Size.Small" />
-                </div>
             </div>
         </div>
-    </div>
 
-        
+        <div class="relative mb-8">
+            <!-- Arrow Buttons -->
+            <div class="flex justify-between absolute inset-0 items-center z-10 px-2 pointer-events-none">
+                <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+                    Class="bg-white p-3 rounded-full shadow text-gray-800 pointer-events-auto hover:bg-gray-50 transition-all duration-300 transform hover:scale-110 opacity-90 hover:opacity-100"
+                    Size="Size.Medium"
+                    Style="color: #008000;"
+                    UserAttributes="@(new() { { "id","prev-btn" } } )" />
 
-        <MudGrid Justify="Justify.FlexStart">
-            <MudItem xs="12" sm="6" md="3" Class="flex justify-center">
-                <MudCard Class="w-full cursor-pointer">
-                    <MudCardMedia Image="./images/gridImage.png"
-                                Class="h-48" 
-                                Height="192" 
-                                Title="AK-900 Wired Keyboard"
-                                Style="object-fit: contain; background-size: contain;" />
-                    <MudCardContent>
-                        <h4 class="font-semibold">HAVIT HV-G92 Gamepad</h4>
-                        <p class="font-bold text-red-500">Ksh 120 <span class="text-gray-400 line-through">Ksh 160</span></p>
-                        <p class="text-yellow-500">★★★★★ (88)</p>
-                        <MudButton Variant="Variant.Filled"
-                                Color="Color.Default"
-                                Style="background-color:#DB4444;color:white"
-                                Class="mt-2 w-full">
-                            Add To Cart
-                        </MudButton>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
 
-            <MudItem xs="12" sm="6" md="3" Class="flex justify-center">
-                <MudCard Class="w-full cursor-pointer">
-                    <MudCardMedia Image="./images/gridImage.png"
-                                  Class="h-48"
-                                  Height="192"
-                                  Title="AK-900 Wired Keyboard"
-                                  Style="object-fit: contain; background-size: contain;" />
+                <MudIconButton Icon="@Icons.Material.Filled.ArrowForward"
+                    Class="bg-white p-3 rounded-full shadow text-gray-800 pointer-events-auto hover:bg-gray-50 transition-all duration-300 transform hover:scale-110 opacity-90 hover:opacity-100"
+                    Size="Size.Small" Style="color: #008000;" UserAttributes="@(new() { { "id","next-btn" } } )" />
+            </div>
 
-                    <MudCardContent>
-                        <h4 class="font-semibold">AK-900 Wired Keyboard</h4>
-                        <p class="font-bold text-red-500">Ksh 960 <span class="text-gray-400 line-through">Ksh 1160</span></p>
-                        <p class="text-yellow-500">★★★★☆ (75)</p>
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Default"
-                                   Style="background-color:#DB4444;color:white"
-                                   Class="mt-2 w-full">
-                            Add To Cart
-                        </MudButton>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
+            <!-- Slider Container -->
+            <div id="slider"
+                class="flex overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] py-6 gap-4 snap-x snap-mandatory px-2 scroll-smooth">
+                @foreach (var product in Products)
+                {
+                    <div
+                        class="snap-center flex-none w-72 transition-all duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] hover:-translate-y-3 hover:shadow-xl rounded-[15px] overflow-hidden">
+                        <MudCard Class="w-full h-full">
+                            <MudCardMedia Image="@product.ImageUrl" Title="@product.Name" Height="192"
+                                Class="h-48 bg-gray-50 flex justify-center items-center transition-transform duration-700 hover:scale-105 object-cover" />
 
-            <MudItem xs="12" sm="6" md="3" Class="max-w-[120px]">
-                <MudCard>
-                    <MudCardMedia Image="./images/gridImage.png"
-                                  Class="h-48"
-                                  Height="192"
-                                  Title="AK-900 Wired Keyboard"
-                                  Style="object-fit: contain; background-size: contain;" />
-                    <MudCardContent>
-                        <h4 class="font-semibold">IPS LCD Gaming Monitor</h4>
-                        <p class="font-bold text-red-500">Ksh 370 <span class="text-gray-400 line-through">Ksh 400</span></p>
-                        <p class="text-yellow-500">★★★★☆ (99)</p>
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Default"
-                                   Style="background-color:#DB4444;color:white"
-                                   Class="mt-2 w-full">
-                            Add To Cart
-                        </MudButton>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
+                            <MudCardContent Class="p-4">
+                                <h4 class="font-semibold text-base truncate">@product.Name</h4>
+                                <p class="font-bold text-red-500">
+                                    Ksh @product.Price
+                                    <span class="text-gray-400 line-through">Ksh @product.Price</span>
+                                </p>
+                                <p class="text-yellow-500 text-sm">★★★★★ 5 </p>
 
-            <MudItem xs="12" sm="6" md="3" Class="max-w-[120px]">
-                <MudCard>
-                    <MudCardMedia Image="./images/gridImage.png"
-                                  Class="h-48"
-                                  Height="192"
-                                  Title="AK-900 Wired Keyboard"
-                                  Style="object-fit: contain; background-size: contain;" />
-                    <MudCardContent>
-                        <h4 class="font-semibold">Wireless HeadPhones</h4>
-                        <p class="font-bold text-red-500">Ksh 375 <span class="text-gray-400 line-through">Ksh 400</span></p>
-                        <p class="text-yellow-500">★★★★☆ (40)</p>
-                        <MudButton Variant="Variant.Filled" 
-                                            Color="Color.Default"
-                                            Style="background-color:#DB4444;color:white"
-                                            Class="mt-2 w-full">Add To Cart
-                        </MudButton>
-                    </MudCardContent>
-                </MudCard>
-            </MudItem>
-        </MudGrid>
+                                <MudButton Variant="Variant.Filled" Color="Color.Default"
+                                    Style="background-color:#DB4444;color:white" Class="mt-2 w-full">
+                                    Add To Cart
+                                </MudButton>
+                            </MudCardContent>
+                        </MudCard>
+                    </div>
+                }
+            </div>
+        </div>
 
-        <div class="mx-auto mt-10 flex w-1/3 justify-center p-4">
-            <MudLink Href="#" Underline="Underline.None"
-                              Color="Color.Default"
-                              Class="inline-block rounded px-6 py-3 hover:bg-secondaryButton/15"
-                              Style="background-color:#DB4444;color:white">
+        <!-- View All Hot Sales -->
+        <div class="mx-auto mt-6 flex w-1/3 justify-center p-4">
+            <MudLink Href="#" Underline="Underline.None" Color="Color.Default"
+                Class="inline-block rounded px-6 py-3 hover:bg-secondaryButton/15"
+                Style="background-color:#DB4444;color:white">
                 View All Hot Sales
             </MudLink>
         </div>
-    
-</section>
+    </section>
+
 
 
 <section class="font-inter mt-10 w-full px-4">
@@ -291,7 +229,7 @@ else
                                     Class="h-48"
                                     Height="192"
                                     Title="@product.Name"
-                                    Style="object-fit: cover; background-size: 200px;" />
+                                    Style="object-fit: cover; background-size: 250px;" />
                         <div class="absolute top-4 right-0 flex flex-col gap-1">
                             <MudIconButton Icon="@Icons.Material.Filled.FavoriteBorder" Variant="Variant.Text" Color="Color.Secondary" />
                             <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Default" />
@@ -315,8 +253,8 @@ else
     <div class="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-12 md:grid-cols-2 md:py-16">
 
         <!-- Left Text & Countdown -->
-        <div class="space-y-4 text-center md:text-left">
-            <p class="text-center font-medium text-green-500">Categories</p>
+        <div class="flex flex-col md:gap-y-4 text-center md:text-left">
+            <p class="text-center md:mb-2 font-medium text-green-500">Categories</p>
             <h2 class="text-center text-3xl leading-tight font-bold md:mb-2 md:text-4xl">
                 Enhance Your<br />Music Experience
             </h2>
@@ -357,10 +295,6 @@ else
 </section>
 }
 
-
-
-
-
 @code {
 
     // Carousel controls
@@ -380,6 +314,9 @@ else
     // State flags
     private bool _cartMerged = false;
     private bool IsLoading = true;
+
+    //slider Initialization Flag
+    private bool _sliderInitialized = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -408,6 +345,9 @@ else
 
                 // Loading products after merging is completed
                 Products = (await ProductService.GetAllProductsAsync()).ToList();
+
+                StateHasChanged();
+
             }
             catch (Exception ex)
             {
@@ -419,8 +359,13 @@ else
                 StateHasChanged();
             }
         }
+        if (!_sliderInitialized && Products?.Count > 0)
+        {
+            _sliderInitialized = true;
+            await Task.Delay(100);
+            await JSRuntime.InvokeVoidAsync("initSlider");
+        }
     }
-
 
     private async Task MergeGuestCartIfNeededAsync()
     {
@@ -434,7 +379,6 @@ else
                 await JSRuntime.InvokeVoidAsync("cartStorage.setGuestId", guestId);
             }
 
-            // Only merge if not already done
             if (_cartMerged) return;
 
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();

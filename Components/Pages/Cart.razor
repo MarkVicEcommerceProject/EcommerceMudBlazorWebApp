@@ -108,7 +108,7 @@
                     
                     <MudButton Variant="Variant.Outlined" 
                                Color="Color.Error" 
-                               OnClick="ClearCart"
+                               OnClick="@(() => ClearCart())"
                                Class="px-6 py-3 rounded-lg">
                         <MudIcon Icon="@Icons.Material.Filled.Delete" Class="mr-2" />
                         Clear Cart
