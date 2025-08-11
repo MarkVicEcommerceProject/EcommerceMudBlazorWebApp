@@ -45,6 +45,7 @@
 </div>
 
 @code {
+
     public const string LoginCallbackAction = "LoginCallback";
 
     private string? message;
@@ -137,6 +138,10 @@
             RedirectManager.RedirectToWithStatus("Account/Login", "Error loading external login information during confirmation.", HttpContext);
         }
 
+
+
+        var PreRegisteredUser = await UserManager.FindByEmailAsync(Input.Email);
+        
         var emailStore = GetEmailStore();
         var user = CreateUser();
 

@@ -339,8 +339,6 @@
             _ => filtered.OrderByDescending(p => p.CreatedAt)
         };
 
-        filterDrawerOpen = false;
-
         return filtered.ToList();
     }
 
@@ -378,9 +376,7 @@
     }
 
     private void ToggleFilterDrawer(){
-        Console.WriteLine("Toggling filter drawer");
         filterDrawerOpen = !filterDrawerOpen;
-        Console.WriteLine($"Filter drawer is now {(filterDrawerOpen ? "open" : "closed")}");
     }
 
     private string GetPrimaryCategory(Product product)

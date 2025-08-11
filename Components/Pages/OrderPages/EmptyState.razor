@@ -1,0 +1,31 @@
+@inject NavigationManager Navigation
+<!-- EmptyState.razor -->
+<div class="bg-white rounded-lg shadow p-8 text-center">
+    <div class="mx-auto max-w-md my-2 p-8" style="padding: 8px">
+        <svg class="mx-auto h-24 w-24 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" 
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        </svg>
+        <h3 class="mt-4 text-lg font-medium text-gray-900">No @Category.Name Orders</h3>
+        <p class="mt-2 text-sm text-gray-500">
+            @(Category.Name switch {
+                "Current" => "You don't have any active orders at the moment.",
+                "Past" => "You haven't placed any orders in the past.",
+                "Cancelled" => "You haven't canceled any orders.",
+                _ => "You don't have any orders in this category."
+            })
+        </p>
+        <div class="mt-6 mb-2">
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       OnClick="@(() => Navigation.NavigateTo("/products"))"
+                       StartIcon="@Icons.Material.Filled.ShoppingCart">
+                Start Shopping
+            </MudButton>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Orders.OrderCategory Category { get; set; }
+}

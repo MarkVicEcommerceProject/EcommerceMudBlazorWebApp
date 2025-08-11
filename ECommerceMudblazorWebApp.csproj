@@ -9,9 +9,10 @@
 
 
   <ItemGroup>
-    <PackageReference Include="CodeBeam.MudBlazor.Extensions" Version="7.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid" Version="9.0.7" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="9.0.7" />
+    <PackageReference Include="CodeBeam.MudBlazor.Extensions" Version="8.2.4" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="9.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid" Version="9.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="9.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.*" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.*" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.*" />
@@ -20,7 +21,7 @@
     <PackageReference Include="MudBlazor" Version="8.*" />
     <PackageReference Include="Extensions.MudBlazor.StaticInput" Version="3.*" />
     <PackageReference Include="Net.Codecrete.QrCodeGenerator" Version="2.0.7" />
-    <PackageReference Include="PayPalServerSDK" Version="1.1.0" />
+    <PackageReference Include="PayPalServerSDK" Version="1.1.1" />
   </ItemGroup>
 
 </Project>

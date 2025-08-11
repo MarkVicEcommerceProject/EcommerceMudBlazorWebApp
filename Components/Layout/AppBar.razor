@@ -11,124 +11,125 @@
 <!-- Redesigned AppBar: Clean, Intuitive, Responsive, No functional changes -->
 <MudAppBar Elevation="1" Style="background-color:#102542;" Class="font-inter shadow-sm fixed w-full
                         h-14 md:h-16">
-    <!-- Left Section -->
-    <div class="flex items-center space-x-3">
-        <!-- Mobile: Hamburger -->
-        <MudHidden Breakpoint="Breakpoint.MdAndUp">
-            <MudIconButton Icon="@Icons.Material.Filled.Menu"
-                           Color="Color.Inherit"
-                           Class="text-white transition-transform duration-150 ease-in-out
-                                  hover:scale-110 hover:opacity-80 focus:ring-2 focus:ring-white rounded"
-                           OnClick="ToggleDrawerCallback"
-            />
+    <div class="flex items-center justify-between w-full h-full px-4 space-x-4">
+            <div class="flex items-center space-x-3">
+            <!-- Mobile: Hamburger -->
+            <MudHidden Breakpoint="Breakpoint.MdAndUp">
+                <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                            Color="Color.Inherit"
+                            Class="text-white transition-transform duration-150 ease-in-out
+                                    hover:scale-110 hover:opacity-80 focus:ring-2 focus:ring-white rounded"
+                            OnClick="ToggleDrawerCallback"
+                />
+                </MudHidden>
+            
+            <!-- Logo -->
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Class="flex items-center">
+                <MudText Typo="Typo.h6" Class="font-bold text-white">
+                    <!-- Mobile abbr, Desktop full -->
+                    <span class="md:hidden">B.E.</span>
+                    <span class="hidden md:inline">BLAZORED ELECTRONICS</span>
+                </MudText>
+            </MudNavLink>
+        </div>
+
+        <!-- Center Section: Primary Nav (Tablet+) -->
+        <nav class="hidden md:flex space-x-6 text-white">
+            <MudNavLink Href="/" Match="NavLinkMatch.All"
+                        Class="transition-colors duration-150 hover:text-gray-200 focus:outline-none">
+                Home
+            </MudNavLink>
+            <MudNavLink Href="/products"
+                        Class="transition-colors duration-150 hover:text-gray-200 focus:outline-none">
+                Shop
+            </MudNavLink>
+            <MudNavLink Href="/about"
+                        Class="transition-colors duration-150 hover:text-gray-200 focus:outline-none">
+                About
+            </MudNavLink>
+            <MudNavLink Href="/contact"
+                        Class="transition-colors duration-150 hover:text-gray-200 focus:outline-none">
+                Contact
+            </MudNavLink>
+        </nav>
+
+
+        <!-- Right Section: Actions -->
+        <div class="flex items-center space-x-4">
+            <!-- Search Icon -->
+            <MudHidden Breakpoint="Breakpoint.SmAndDown">
+                <MudTextField Placeholder="Search products..."
+                        T="string"
+                        Class="hidden  md:h-3/4 w-64"
+                        Adornment="Adornment.End"
+                        AdornmentIcon="@Icons.Material.Filled.Search"
+                        AdornmentColor="Color.Inherit"
+                        Color="Color.Inherit"
+                        Variant="Variant.Outlined"
+                        
+                        Style="background-color: #ffffff; border-radius: 4px;" />
+
             </MudHidden>
-        
-        <!-- Logo -->
-        <MudNavLink Href="/" Match="NavLinkMatch.All" Class="flex items-center">
-            <MudText Typo="Typo.h6" Class="font-bold text-white">
-                <!-- Mobile abbr, Desktop full -->
-                <span class="md:hidden">B.E.</span>
-                <span class="hidden md:inline">BLAZORED ELECTRONICS</span>
-            </MudText>
-        </MudNavLink>
+            
+            <!-- Auth / Cart -->
+            <AuthorizeView>
+                <Authorized>
+                    <!-- Profile -->
+                    <MudNavLink Href="Account/Manage"
+                                Icon="@Icons.Material.Filled.Person"
+                                IconColor="Color.Inherit"
+                                Class="text-white transition-colors duration-150 hover:text-gray-200 focus:outline-none">
+                        <span class="hidden md:inline">@UserName?.Split('@')[0]</span>
+                    </MudNavLink>
+
+                    <!-- Cart with Badge -->
+                    <MudBadge BadgeColor="Color.Primary"
+                            Content="@CartState.CartCount"
+                            Visible="@(!IsCartEmpty)"
+                            Overlap="true">
+                        <MudIconButton Href="/cart"
+                                    Icon="@Icons.Material.Filled.ShoppingCart"
+                                    Size="Size.Medium"
+                                    Class="text-white transition-transform duration-150 ease-in-out
+                                            hover:scale-110 hover:opacity-80 focus:ring-2 focus:ring-white rounded" />
+                    </MudBadge>
+
+                    <!-- Logout -->
+                    <form action="Account/Logout" method="post">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="ReturnUrl" value="@CurrentUrl" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Logout"
+                                    Color="Color.Warning"
+                                    Class="transition-transform duration-150 ease-in-out
+                                            hover:scale-110 hover:opacity-80 focus:ring-2 focus:ring-white rounded"
+                                    ButtonType="ButtonType.Submit"
+                                    AriaLabel="Logout" />
+                    </form>
+                </Authorized>
+                <NotAuthorized>
+                    <!-- Cart Badge -->
+                    <MudBadge Content="@CartState.CartCount"
+                            Visible="@(!IsCartEmpty)"
+                            Overlap="true">
+                        <MudIconButton Href="/cart"
+                                    Icon="@Icons.Material.Filled.ShoppingCart"
+                                    Size="Size.Medium"
+                                    Class="text-white transition-transform duration-150 ease-in-out
+                                            hover:scale-110 hover:opacity-80 focus:ring-2 focus:ring-white rounded" />
+                    </MudBadge>
+                    <!-- Login -->
+                    <MudNavLink Href="/account/login"
+                                Icon="@Icons.Material.Filled.Lock"
+                                IconColor="Color.Inherit"
+                                Class="text-white transition-colors duration-150 hover:text-gray-200 focus:outline-none">
+                        Login
+                    </MudNavLink>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
     </div>
-
-    <MudSpacer/>
-
-    <!-- Center Section: Primary Nav (Tablet+) -->
-    <nav class="hidden md:flex space-x-6 text-white">
-        <MudNavLink Href="/" Match="NavLinkMatch.All"
-                    Class="transition-colors duration-150 hover:text-gray-200 focus:outline-none">
-            Home
-        </MudNavLink>
-        <MudNavLink Href="/products"
-                    Class="transition-colors duration-150 hover:text-gray-200 focus:outline-none">
-            Shop
-        </MudNavLink>
-        <MudNavLink Href="/about"
-                    Class="transition-colors duration-150 hover:text-gray-200 focus:outline-none">
-            About
-        </MudNavLink>
-        <MudNavLink Href="/contact"
-                    Class="transition-colors duration-150 hover:text-gray-200 focus:outline-none">
-            Contact
-        </MudNavLink>
-    </nav>
-
-
-    <!-- Right Section: Actions -->
-    <div class="flex items-center space-x-4">
-        <!-- Search Icon -->
-        <MudHidden Breakpoint="Breakpoint.SmAndDown">
-            <MudTextField Placeholder="Search products..."
-                      T="string"
-                      Class="hidden  md:h-3/4 w-64"
-                      Adornment="Adornment.End"
-                      AdornmentIcon="@Icons.Material.Filled.Search"
-                      AdornmentColor="Color.Inherit"
-                      Color="Color.Inherit"
-                      Variant="Variant.Outlined"
-                      
-                      Style="background-color: #ffffff; border-radius: 4px;" />
-
-        </MudHidden>
-        
-        <!-- Auth / Cart -->
-        <AuthorizeView>
-            <Authorized>
-                <!-- Profile -->
-                <MudNavLink Href="Account/Manage"
-                            Icon="@Icons.Material.Filled.Person"
-                            IconColor="Color.Inherit"
-                            Class="text-white transition-colors duration-150 hover:text-gray-200 focus:outline-none">
-                    <span class="hidden md:inline">@UserName?.Split('@')[0]</span>
-                </MudNavLink>
-
-                <!-- Cart with Badge -->
-                <MudBadge BadgeColor="Color.Primary"
-                          Content="@CartState.CartCount"
-                          Visible="@(!IsCartEmpty)"
-                          Overlap="true">
-                    <MudIconButton Href="/cart"
-                                   Icon="@Icons.Material.Filled.ShoppingCart"
-                                   Size="Size.Medium"
-                                   Class="text-white transition-transform duration-150 ease-in-out
-                                          hover:scale-110 hover:opacity-80 focus:ring-2 focus:ring-white rounded" />
-                </MudBadge>
-
-                <!-- Logout -->
-                <form action="Account/Logout" method="post">
-                    <AntiforgeryToken />
-                    <input type="hidden" name="ReturnUrl" value="@CurrentUrl" />
-                    <MudIconButton Icon="@Icons.Material.Filled.Logout"
-                                   Color="Color.Warning"
-                                   Class="transition-transform duration-150 ease-in-out
-                                          hover:scale-110 hover:opacity-80 focus:ring-2 focus:ring-white rounded"
-                                   ButtonType="ButtonType.Submit"
-                                   AriaLabel="Logout" />
-                </form>
-            </Authorized>
-            <NotAuthorized>
-                <!-- Cart Badge -->
-                <MudBadge Content="@CartState.CartCount"
-                          Visible="@(!IsCartEmpty)"
-                          Overlap="true">
-                    <MudIconButton Href="/cart"
-                                   Icon="@Icons.Material.Filled.ShoppingCart"
-                                   Size="Size.Medium"
-                                   Class="text-white transition-transform duration-150 ease-in-out
-                                          hover:scale-110 hover:opacity-80 focus:ring-2 focus:ring-white rounded" />
-                </MudBadge>
-                <!-- Login -->
-                <MudNavLink Href="/account/login"
-                            Icon="@Icons.Material.Filled.Lock"
-                            IconColor="Color.Inherit"
-                            Class="text-white transition-colors duration-150 hover:text-gray-200 focus:outline-none">
-                    Login
-                </MudNavLink>
-            </NotAuthorized>
-        </AuthorizeView>
-    </div>
+    <!-- Left Section -->
+    
 </MudAppBar>
 
 @code {

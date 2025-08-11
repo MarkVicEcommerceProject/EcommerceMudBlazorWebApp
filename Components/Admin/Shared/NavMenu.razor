@@ -7,7 +7,7 @@
         <MudNavLink Href="/admin" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
         <MudNavLink Href="/admin/categories" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">Categories</MudNavLink>
         <MudNavLink Href="/admin/products" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Products</MudNavLink>
-        @*<MudNavLink Href="auth" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Lock">Auth Required</MudNavLink>*@
+        <MudNavLink Href="/admin/orders" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Orders</MudNavLink>
     </div>
     <MudSpacer/>
     <div>
@@ -18,7 +18,7 @@
                     <AntiforgeryToken />
                     <input type="hidden" name="ReturnUrl" value="@currentUrl" />
                     <button type="submit" class="mud-nav-link mud-ripple">
-                        <MudIcon Icon="@Icons.Material.Filled.Logout" Color="Color.Info" Class="mr-3"></MudIcon> Logout
+                        <MudIcon Icon="@Icons.Material.Filled.Logout" Color="Color.Info" Class="mr-4"></MudIcon> Logout
                     </button>
                 </form>
             </Authorized>

@@ -1,0 +1,151 @@
+@using ECommerceMudblazorWebApp.Models
+
+<!-- OrderCard.razor -->
+<MudCard Elevation="1" Class="h-full hover:shadow-md transition-shadow duration-300">
+    <MudCardContent>
+        <!-- Order Header -->
+        <div class="flex justify-between items-start mb-3">
+            <div>
+                <MudText Class="text-sm font-medium text-gray-500">ORDER #@Order.Id</MudText>
+                <MudText Class="text-xs text-gray-400">@Order.OrderDate.ToString("MMM dd, yyyy")</MudText>
+            </div>
+            <div class="@GetStatusBadgeClass(Order.Status)">
+                @Order.Status.ToString().ToUpper()
+            </div>
+        </div>
+        
+        <!-- Product Thumbnails -->
+        <div class="flex -space-x-2 mb-4">
+            @foreach (var item in Order.OrderItems.Take(3))
+            {
+                <div class="relative">
+                    @if (item.Product != null)
+                    {
+                        <img src="@item.Product.ImageUrl" 
+                            alt="@item.Product.Name" 
+                            class="w-14 h-14 rounded-lg border-2 border-white object-cover shadow" />
+                    }
+                    else
+                    {
+                        <div class="w-14 h-14 rounded-lg bg-gray-200 border-2 border-white flex items-center justify-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Image" Class="text-gray-500" />
+                        </div>
+                    }
+                    @if (item.Quantity > 1)
+                    {
+                        <div class="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                            @item.Quantity
+                        </div>
+                    }
+                </div>
+            }
+            @if (Order.OrderItems.Count > 3)
+            {
+                <div class="w-14 h-14 rounded-lg bg-gray-100 border-2 border-white flex items-center justify-center">
+                    <span class="text-gray-500 font-medium">+@(Order.OrderItems.Count - 3)</span>
+                </div>
+            }
+        </div>
+        
+        <!-- Order Summary -->
+        <div class="flex justify-between items-center mb-3">
+            <MudText Class="text-sm font-medium">@Order.OrderItems.Count item@(Order.OrderItems.Count > 1 ? "s" : "")</MudText>
+            <MudText Class="text-lg font-bold text-gray-800">Ksh @Order.TotalAmount.ToString("N2")</MudText>
+        </div>
+        
+        <!-- Delivery Info -->
+        @if (Order.Status != OrderStatus.CANCELLED && Order.Status != OrderStatus.DELIVERED)
+        {
+            <div class="flex items-center text-sm text-gray-600 mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Class="mr-2 text-gray-500" Size="Size.Small" />
+                <span>Est. delivery: @GetDeliveryETA(Order).ToString("MMM dd")</span>
+            </div>
+        }
+        
+        <!-- Progress Bar for Current Orders -->
+        @if (Order.Status == OrderStatus.PROCESSING || Order.Status == OrderStatus.SHIPPED)
+        {
+            <div class="mb-4">
+                <div class="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>Ordered</span>
+                    <span>@(Order.Status == OrderStatus.SHIPPED ? "Shipped" : "Delivered")</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                    <div class="@GetProgressBarClass(Order.Status) h-1.5 rounded-full" 
+                         style="width: @(Order.Status == OrderStatus.PROCESSING ? "33%" : "66%")"></div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>@Order.OrderDate.ToString("MMM dd")</span>
+                    <span>@GetDeliveryETA(Order).ToString("MMM dd")</span>
+                </div>
+            </div>
+        }
+        
+        <!-- Most Bought Tag -->
+        @if (Order.OrderItems.Any(i => i.Product?.Name?.Contains("Pad") == true))
+        {
+            <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.Favorite" Class="mr-1" Size="Size.Small" />
+                Most Bought
+            </div>
+        }
+    </MudCardContent>
+    <MudCardActions Class="justify-end">
+        <MudButton Variant="Variant.Outlined" 
+                   Color="Color.Tertiary" 
+                   OnClick="@(() => OnViewDetails.InvokeAsync(Order))"
+                   EndIcon="@Icons.Material.Filled.ChevronRight">
+            View Details
+        </MudButton>
+        
+        @if (Order.Status == OrderStatus.DELIVERED)
+        {
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       OnClick="@(() => Reorder(Order))"
+                       StartIcon="@Icons.Material.Filled.Replay">
+                Reorder
+            </MudButton>
+        }
+    </MudCardActions>
+</MudCard>
+
+@code {
+    [Parameter] public Order Order { get; set; }
+    [Parameter] public EventCallback<Order> OnViewDetails { get; set; }
+    [Parameter] public EventCallback<Order> OnReorder { get; set; }
+    [CascadingParameter] public Orders Parent { get; set; }
+
+    private string GetStatusBadgeClass(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.PENDING => "bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium tracking-widest",
+            OrderStatus.PROCESSING => "bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium tracking-widest",
+            OrderStatus.SHIPPED => "bg-teal-100 text-teal-800 px-2 py-1 rounded-full text-xs font-medium tracking-widest",
+            OrderStatus.DELIVERED => "bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-xs font-medium tracking-widest",
+            OrderStatus.CANCELLED => "bg-stone-100 text-stone-800 px-2 py-1 rounded-full text-xs font-medium tracking-widest",
+            _ => "bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium tracking-widest"
+        };
+    }
+
+    private string GetProgressBarClass(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.PROCESSING => "bg-blue-500",
+            OrderStatus.SHIPPED => "bg-teal-500",
+            _ => "bg-gray-500"
+        };
+    }
+
+    private void Reorder(Order order)
+    {
+        OnReorder.InvokeAsync(order);
+    }
+    
+    private DateTime GetDeliveryETA(Order order)
+    {
+        return Parent?.GetDeliveryETA(order) ?? order.OrderDate.AddDays(5);
+    }
+}

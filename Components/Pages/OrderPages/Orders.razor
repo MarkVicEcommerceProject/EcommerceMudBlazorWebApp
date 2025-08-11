@@ -1,0 +1,497 @@
+@page "/orders"
+@using ECommerceMudblazorWebApp.Models
+@using ECommerceMudblazorWebApp.Services.Orders
+@using ECommerceMudblazorWebApp.Components.Pages.OrderPages
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@inject IOrderService OrderService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+@attribute [Authorize]
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ">
+            <!-- Proactive Alert Banner -->
+            @if (ShowDeliveryAlert)
+            {
+                <div class="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 rounded">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <MudIcon Icon="@Icons.Material.Filled.Warning" 
+                                    Class="text-amber-500" />
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-amber-700">
+                                <span class="font-medium">Delivery Alert!</span> 
+                                Severe weather is causing delays in the Northeast region. 
+                                Orders may be delayed by 1-2 days.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="flex flex-col md:flex-row p-4 gap-6">
+                <!-- Filter Sidebar - Desktop -->
+                <div class="md:w-1/4 hidden md:block md:p-4">
+                    <div class="bg-white rounded-lg shadow p-4 sticky top-24">
+                        <div class="bg-[#102542] py-2">
+                            <MudText Typo="Typo.h6" Class="font-bold text-center text-white mb-4 mx-2">Order Filters</MudText>
+                        </div>
+                        
+                        
+                        <!-- Order Category Tabs - Vertical -->
+                        <MudTabs Ripple="false" Position="Position.Left" 
+                                ActivePanelIndexChanged="@(index => 
+                                    {
+                                        _activeTabIndex = index;
+                                        ApplyFilters();
+                                    })"
+                                Class="border-r border-gray-200">
+                            @foreach (var category in OrderCategories)
+                            {
+                                <MudTabPanel Text="@category.Name" Icon="@category.Icon">
+                                    <MudBadge Content="@category.Count" 
+                                            Color="Color.Primary" 
+                                            Class="ml-2" />
+                                </MudTabPanel>
+                            }
+                        </MudTabs>
+                        
+                        <div class="mt-6 z-99">
+                            <MudText Class="text-sm font-medium text-gray-700 mb-2 mx-2">Date Range</MudText>
+                            <MudDateRangePicker Label="Select Date Range"
+                                                PickerVariant="@PickerVariant.Inline"
+                                                Elevation="30"
+                                                DateRangeChanged="@(range =>
+                                                {
+                                                    _dateRange = range;
+                                                    ApplyFilters();
+                                                })"
+                                                Class="w-full z-99" />
+                        </div>
+                        
+                        <div class="mt-4 mx-2">
+                            <MudText Class="text-sm font-medium text-gray-700 mb-2 ">Search</MudText>
+                            <MudTextField T="string" 
+                                        ValueChanged="@((string val) => {
+                                            _searchQuery = val; 
+                                            ApplyFilters();
+                                        })" 
+                                        Placeholder="Order ID or product name..." 
+                                        AdornmentIcon="@Icons.Material.Filled.Search"
+                                        Adornment="Adornment.Start"
+                                        Class="w-full" />
+                        </div>
+                        
+                        <div class="mt-4">
+                            <MudText Class="text-sm font-medium text-gray-700 mb-2 mx-2">Order Status</MudText>
+                            @foreach (var status in Enum.GetValues<OrderStatus>())
+                            {
+                                <MudCheckBox T="bool" 
+                                             Label="@status.ToString()" 
+                                             Value="@_selectedStatuses.Contains(status)"
+                                             ValueChanged="@(value => ToggleStatusFilter(status, value))"
+                                             Class="mb-2" />
+                            }
+                        </div>
+                        
+                        <div class="mt-6 flex flex-col gap-2 mb-2 mx-2">
+                            <MudButton Variant="Variant.Filled" 
+                                    Color="Color.Primary" 
+                                    OnClick="ApplyFilters"
+                                    FullWidth="true">
+                                Apply
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" 
+                                    Color="Color.Error" 
+                                    OnClick="ResetFilters"
+                                    FullWidth="true"
+                                    Class="mb-2">
+                                Reset Filters
+                            </MudButton>  
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Area -->
+                <div class="md:w-3/4">
+                    <!-- Order Category Tabs - Mobile -->
+                    <div class="md:hidden mb-6">
+                        <MudTabs Ripple="false" 
+                            ActivePanelIndexChanged="@(index => 
+                                    {
+                                        _activeTabIndex = index;
+                                        ApplyFilters();
+                                    })"
+                                Centered="true"
+                                Class="border-b border-gray-200">
+                            @foreach (var category in OrderCategories)
+                            {
+                                <MudTabPanel Text="@category.Name" Icon="@category.Icon">
+                                    <MudBadge Content="@category.Count" 
+                                            Color="Color.Primary" 
+                                            Class="ml-2" />
+                                </MudTabPanel>
+                            }
+                        </MudTabs>
+                    </div>
+                    <MudHidden Breakpoint="Breakpoint.MdAndUp" Inline="true">
+                        <div class="flex justify-between items-center mb-4">
+                            <MudText Typo="Typo.h4" Class="font-bold">Shop All</MudText>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" 
+                                    StartIcon="@Icons.Material.Filled.FilterList"
+                                    OnClick="@ToggleFilterDrawer">
+                                Filters
+                            </MudButton>
+                        </div>
+                    </MudHidden>
+
+                    <!-- Filter Summary -->
+                    <div class="bg-white rounded-lg shadow p-4 mb-6">
+                        <div class="flex flex-wrap gap-2">
+                            @if (_dateRange.Start != null || _dateRange.End != null)
+                            {
+                                <MudChip T="DateRange"
+                                        Color="Color.Primary" 
+                                        OnClose="ClearDateFilter"
+                                        CloseIcon="@Icons.Material.Filled.Close">
+                                    Date: @(_dateRange.Start?.ToString("MMM dd, yyyy") ?? "Start") - @(_dateRange.End?.ToString("MMM dd, yyyy") ?? "End")
+                                </MudChip>
+                            }
+                            
+                            @if (!string.IsNullOrWhiteSpace(_searchQuery))
+                            {
+                                <MudChip T="string"
+                                        Color="Color.Primary" 
+                                        OnClose="@(() => { _searchQuery = null; ApplyFilters(); })"
+                                        CloseIcon="@Icons.Material.Filled.Close">
+                                    Search: "@_searchQuery"
+                                </MudChip>
+                            }
+                            
+                            @foreach (var status in _selectedStatuses)
+                            {
+                                <MudChip T="OrderStatus"
+                                        Text="@status.ToString()"
+                                        Icon="@Icons.Material.Filled.CheckCircle"
+                                        IconColor="Color.Inherit"
+                                        Class="cursor-pointer"
+                                        Color="Color.Primary" 
+                                        OnClose="@(() => ToggleStatusFilter(status, false))"
+                                        CloseIcon="@Icons.Material.Filled.Close">
+                                    @status
+                                </MudChip>
+                            }
+                        </div>
+                    </div>
+
+                    @if (IsLoading)
+                    {
+                        <div class="flex justify-center py-12">
+                            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+                        </div>
+                    }
+                    else if (FilteredOrders.Any())
+                    {
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach (var order in FilteredOrders)
+                            {
+                                <OrderCard Order="order" OnViewDetails="OpenOrderDetailsDialogAsync" />
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <EmptyState Category="@OrderCategories[_activeTabIndex]"/>
+                    }
+                </div>
+            </div>
+</div>
+
+<!-- Filter Drawer - Mobile -->
+<MudHidden Breakpoint="Breakpoint.MdAndUp">
+    <MudDrawer @bind-Open="_filterDrawerOpen" 
+            Anchor="Anchor.Right"
+            Variant="@DrawerVariant.Temporary"
+            Breakpoint="Breakpoint.None"
+            Style="padding: 7px;"
+            Elevation="25">
+        <div class="p-4">
+            <div class="flex justify-between bg-[#102542] text-white items-center mb-4">
+                <MudText Typo="Typo.h6" Class="font-bold ml-2">Filters</MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Close" 
+                                OnClick="ToggleFilterDrawer"
+                                Class="bg-white"
+                                Style="@($"color:{Colors.Teal.Darken1};")" />
+            </div>
+            
+            <div class="mt-4">
+                <MudText Class="text-sm font-medium text-[#102542] mb-2">Date Range</MudText>
+                <MudDateRangePicker Label="Select Date Range"
+                                                PickerVariant="@PickerVariant.Dialog"
+                                                Elevation="30"
+                                                DateRangeChanged="@(range =>
+                                                {
+                                                    _dateRange = range;
+                                                    ApplyFilters();
+                                                })"
+                                                Class="w-full" />
+            </div>
+            
+            <div class="mt-4">
+                <MudText Class="text-sm font-medium text-gray-700 mb-2">Search</MudText>
+                <MudTextField @bind-Value="@_searchQuery" 
+                            Placeholder="Order ID or product name..." 
+                            AdornmentIcon="@Icons.Material.Filled.Search"
+                            Adornment="Adornment.Start"
+                            Class="w-full" />
+            </div>
+            
+            <div class="mt-4">
+                <MudText Class="text-sm font-medium text-gray-700 mb-2">Order Status</MudText>
+                @foreach (var status in Enum.GetValues<OrderStatus>())
+                {
+                    <MudCheckBox T="bool" 
+                                Label="@status.ToString()" 
+                                Value="@_selectedStatuses.Contains(status)"
+                                ValueChanged="@((value) => ToggleStatusFilter(status, value))"
+                                Class="mb-2" />
+                }
+            </div>
+            
+            <div class="mt-6 flex flex-col gap-2">
+                <MudButton Variant="Variant.Outlined" 
+                        Color="Color.Error" 
+                        OnClick="ResetFilters"
+                        FullWidth="true">
+                    Reset
+                </MudButton>
+                <MudButton Variant="Variant.Filled" 
+                        Color="Color.Primary"
+                           OnClick="@(() => {
+                                ApplyFilters(); ToggleFilterDrawer();
+                           })"
+                        FullWidth="true">
+                    Apply
+                </MudButton>
+            </div>
+        </div>
+    </MudDrawer>
+</MudHidden>
+
+
+@code {
+    // Order data
+    private List<Order> _allOrders = new();
+    private List<Order> _filteredOrders = new();
+    private Order? _selectedOrder = null;
+
+    // UI State
+    private int _activeTabIndex = 0;
+    private bool _detailDrawerOpen = false;
+    private bool _filterDrawerOpen = false;
+    private DateRange _dateRange = new DateRange(DateTime.Now.AddMonths(-1), DateTime.Now);
+    private string? _searchQuery;
+    private List<OrderStatus> _selectedStatuses = new();
+    private bool ShowDeliveryAlert = true;
+    private bool IsLoading = true;
+    private string? _currentUserId;
+
+    // Order categories
+    private readonly List<OrderCategory> OrderCategories = new()
+    {
+        new("Current", Icons.Material.Filled.ShoppingBag, 0),
+        new("Past", Icons.Material.Filled.History, 0),
+        new("Cancelled", Icons.Material.Filled.Cancel, 0)
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        _currentUserId = user.FindFirst(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(_currentUserId))
+        {
+            Snackbar.Add("Please sign in to view your orders", Severity.Error);
+            Navigation.NavigateTo("/Account/Login");
+            return;
+        }
+
+        await LoadOrders();
+        IsLoading = false;
+    }
+
+    private async Task LoadOrders()
+    {
+        try
+        {
+            var orders = await OrderService.GetOrdersByUserIdAsync(_currentUserId);
+            _allOrders = orders.ToList();
+            ApplyFilters();
+            UpdateCategoryCounts();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading orders: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void UpdateCategoryCounts()
+    {
+        OrderCategories[0].Count = _allOrders.Count(o => 
+            o.Status != OrderStatus.CANCELLED && 
+            o.Status != OrderStatus.DELIVERED);
+
+        OrderCategories[1].Count = _allOrders.Count(o => 
+            o.Status == OrderStatus.DELIVERED);
+
+        OrderCategories[2].Count = _allOrders.Count(o => 
+            o.Status == OrderStatus.CANCELLED);
+    }
+
+    private void ApplyFilters()
+    {
+        var currentCategory = OrderCategories[_activeTabIndex].Name;
+
+        // First filter by category
+        var filtered = currentCategory switch
+        {
+            "Current" => _allOrders.Where(o => 
+                o.Status != OrderStatus.CANCELLED && 
+                o.Status != OrderStatus.DELIVERED),
+
+            "Past" => _allOrders.Where(o => 
+                o.Status == OrderStatus.DELIVERED),
+
+            "Cancelled" => _allOrders.Where(o => 
+                o.Status == OrderStatus.CANCELLED),
+
+            _ => _allOrders.AsEnumerable()
+        };
+
+        // Apply date filter
+        if (_dateRange.Start.HasValue)
+            filtered = filtered.Where(o => o.OrderDate >= _dateRange.Start.Value);
+
+        if (_dateRange.End.HasValue)
+        {
+            var endInclusive = _dateRange.End.Value.Date.AddDays(1).AddTicks(-1);
+            filtered = filtered.Where(o => o.OrderDate <= endInclusive);
+        }
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(_searchQuery))
+        {
+            var query = _searchQuery.Trim().ToLowerInvariant();
+            filtered = filtered.Where(o => 
+                o.Id.ToString().ToLowerInvariant().Contains(query) || 
+                o.OrderItems.Any(i => 
+                    i.Product != null &&
+                    !string.IsNullOrWhiteSpace(i.Product.Name) &&
+                    i.Product.Name.ToLowerInvariant().Contains(query)));
+        }
+
+        // Apply status filter
+        if (_selectedStatuses.Any())
+            filtered = filtered.Where(o => _selectedStatuses.Contains(o.Status));
+
+        FilteredOrders = filtered.ToList();
+        StateHasChanged();
+    }
+
+    private List<Order> FilteredOrders
+    {
+        get => _filteredOrders;
+        set
+        {
+            if(_filteredOrders != value){
+                _filteredOrders = value;
+            }
+
+            UpdateCategoryCounts();
+        }
+    }
+
+    private async Task OpenOrderDetailsDialogAsync(Order order)
+    {
+        _selectedOrder = order;
+        var parameters = new DialogParameters
+        {
+            {nameof(OrderDetailsView.Order), order},
+            {nameof(OrderDetailsView.OnClose), EventCallback.Factory.Create(this, CloseOrderDetails)},
+            {nameof(OrderDetailsView.OnReorder), EventCallback.Factory.Create(this, () => ReorderItems(order))}
+        };
+        var options = new DialogOptions {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseButton = true,
+            CloseOnEscapeKey = true
+        };
+        var dialogReference = await DialogService.ShowAsync<OrderDetailsView>("Order Details", parameters, options);
+    }
+    
+    private void CloseOrderDetails()
+    {
+        _selectedOrder = null;
+    }
+    
+    private void ToggleFilterDrawer() => _filterDrawerOpen = !_filterDrawerOpen;
+    
+    private void ToggleStatusFilter(OrderStatus status, bool isSelected)
+    {
+        if (isSelected && !_selectedStatuses.Contains(status))
+            _selectedStatuses.Add(status);
+        else if (!isSelected && _selectedStatuses.Contains(status))
+            _selectedStatuses.Remove(status);
+        
+        ApplyFilters();
+    }
+    
+    private void ClearDateFilter()
+    {
+        _dateRange = new DateRange(null, null);
+        ApplyFilters();
+    }
+    
+    private void ResetFilters()
+    {
+        _dateRange = new DateRange(DateTime.Now.AddMonths(-1), DateTime.Now);
+        _searchQuery = null;
+        _selectedStatuses.Clear();
+        ApplyFilters();
+    }
+    
+    private void ReorderItems(Order order)
+    {
+        Snackbar.Add($"Added {order.OrderItems.Count} items to your cart", Severity.Success);
+        
+        // Call service to reorder
+        try
+        {
+
+            // await OrderService.ReorderAsync(order.Id);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error reordering: {ex.Message}", Severity.Error);
+        }
+    }
+    
+    protected internal DateTime GetDeliveryETA(Order order)
+    {
+        // estimated delivery date (3-10 days from order date)
+        var random = new Random(order.Id);
+        int days = random.Next(3, 11);
+        return order.OrderDate.AddDays(days);
+    }
+    
+    public record OrderCategory(string Name, string Icon, int Count)
+    {
+        public string Name { get; set; } = Name;
+        public string Icon { get; set; } = Icon;
+        public int Count { get; set; } = Count;
+    }
+}

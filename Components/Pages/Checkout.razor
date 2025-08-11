@@ -485,7 +485,7 @@
         await OrderService.PlaceOrderAsync(order);
         Snackbar.Add("Order placed successfully!", Severity.Success);
         await CartService.ClearCartAsync(userId, null);
-        NavigationManager.NavigateTo("/order-confirmation");
+        NavigationManager.NavigateTo("/orders");
     }
 
     private sealed class InputModel

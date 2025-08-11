@@ -6,6 +6,18 @@
     --color-tahiti: #3ab7bf;
     --color-bermuda: #78dcca;
     --color-secondaryButton:#DB4444;
+    --color-googleTextGray: #3c4043;
+    --color-google-buttonBlue: #1a73e8;
+    --color-google-buttonBlue-hover: #5195ee;
+    --color-google-buttonDark: #202124;
+    --color-google-buttonDark-hover: #555658;
+    --color-google-buttonBorder-light: #dadce0;
+    --color-google-logoBlue: #4285f4;
+    --color-google-logoGreen: #34a853;
+    --color-google-logoYellow: #fbbc05;
+    --color-google-logoRed: #ea4335;
 
     --font-inter:"Inter",sans-serif;
+
+    
 }

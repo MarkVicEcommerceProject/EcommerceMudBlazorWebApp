@@ -1,0 +1,47 @@
+@using ECommerceMudblazorWebApp.Components.Admin.Pages.Orders
+
+<MudCard Class="h-full shadow-md hover:shadow-lg transition-shadow duration-300">
+    <MudCardContent>
+        <div class="flex justify-between items-center">
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="text-gray-500 uppercase tracking-wider">@Title</MudText>
+                <MudText Typo="Typo.h4" Class="font-bold mt-1 text-gray-900">@Value</MudText>
+            </div>
+            <div class="p-3 rounded-full bg-opacity-20 @IconBgClass">
+                <MudIcon Icon="@Icon" Size="Size.Large" Class="@($"{IconClass} text-xl")" />
+            </div>
+        </div>
+        <MudText Typo="Typo.caption" Class="@($"mt-2 {TrendClass}")">
+            @Trend
+        </MudText>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public string Title { get; set; }
+    [Parameter] public string Value { get; set; }
+    [Parameter] public string Trend { get; set; }
+    [Parameter] public string Icon { get; set; }
+
+    private string IconBgClass => Title switch
+    {
+        "Total Orders" => "bg-blue-100",
+        "Total Revenue" => "bg-green-100",
+        "Fulfilled" => "bg-teal-100",
+        "Pending" => "bg-amber-100",
+        _ => "bg-gray-100"
+    };
+
+    private string IconClass => Title switch
+    {
+        "Total Orders" => "text-blue-600",
+        "Total Revenue" => "text-green-600",
+        "Fulfilled" => "text-teal-600",
+        "Pending" => "text-amber-600",
+        _ => "text-gray-600"
+    };
+
+    private string TrendClass => 
+        Trend?.StartsWith("+") == true ? "text-green-500" : 
+        Trend?.StartsWith("-") == true ? "text-red-500" : "text-gray-500";
+}

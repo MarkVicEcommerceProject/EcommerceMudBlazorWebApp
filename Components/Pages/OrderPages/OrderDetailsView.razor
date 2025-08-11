@@ -1,0 +1,250 @@
+@using ECommerceMudblazorWebApp.Models
+@using ECommerceMudblazorWebApp.Services.Orders
+@inject IOrderService OrderService
+@inject NavigationManager Navigation
+@inject IDialogService DialogService
+<!-- OrderDetailsView.razor -->
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="font-bold flex items-center">
+            <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" />
+            Order Details #@Order.Id
+        </MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <div class="p-6">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <MudText Typo="Typo.h6" Class="font-bold">Order Details</MudText>
+                    <MudText Class="text-sm text-gray-500">#@Order.Id</MudText>
+                </div>
+                <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="Close" />
+            </div>
+
+            <!-- Order Status & Summary -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <div class="flex flex-wrap justify-between items-center gap-4">
+                    <div class="flex items-center">
+                        <div class="@GetStatusBadgeClass(Order.Status)">
+                            @Order.Status.ToString().ToUpper()
+                        </div>
+                        @if (Order.Status == OrderStatus.PROCESSING || Order.Status == OrderStatus.SHIPPED)
+                        {
+                            <div class="ml-4 text-sm text-gray-600 flex items-center">
+                                <MudIcon Icon="@Icons.Material.Filled.LocalShipping" Class="mr-1" Size="Size.Small" />
+                                Est. delivery: @GetDeliveryETA().ToString("MMM dd, yyyy")
+                            </div>
+                        }
+                    </div>
+                    <div>
+                        <MudText Class="text-lg font-bold">Ksh @Order.TotalAmount.ToString("N2")</MudText>
+                        <MudText Class="text-sm text-gray-500">Placed on @Order.OrderDate.ToString("MMM dd, yyyy")</MudText>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                @if (Order.Status == OrderStatus.PROCESSING || Order.Status == OrderStatus.SHIPPED)
+                {
+                    <div class="mt-4">
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>Order Placed</span>
+                            <span>@(Order.Status == OrderStatus.SHIPPED ? "Shipped" : "Out for Delivery")</span>
+                            <span>Delivered</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="@GetProgressBarClass(Order.Status) h-2 rounded-full" style="width: @(Order.Status == OrderStatus.PROCESSING ? "33%" : "66%")"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>@Order.OrderDate.ToString("MMM dd")</span>
+                            <span>@GetDeliveryETA().ToString("MMM dd")</span>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Items List -->
+            <div class="mb-8">
+                <MudText Typo="Typo.subtitle1" Class="font-bold mb-4">Items (@Order.OrderItems.Count)</MudText>
+                <div class="space-y-4">
+                    @foreach (var item in Order.OrderItems)
+                    {
+                        <div class="flex items-start p-3 border border-gray-200 rounded-lg">
+                            @if (item.Product != null)
+                            {
+                                <img src="@item.Product.ImageUrl" alt="@item.Product.Name" class="w-16 h-16 rounded-md object-cover mr-4" />
+                            }
+                            else
+                            {
+                                <div class="w-16 h-16 rounded-md bg-gray-200 flex items-center justify-center mr-4">
+                                    <MudIcon Icon="@Icons.Material.Filled.Image" Class="text-gray-500" />
+                                </div>
+                            }
+                            <div class="flex-1">
+                                <MudText Class="font-medium">@(item.Product?.Name ?? $"Product {item.ProductId}")</MudText>
+                                <div class="flex justify-between mt-1">
+                                    <MudText Class="text-gray-500">Qty: @item.Quantity</MudText>
+                                    <MudText Class="font-medium">@((item.UnitPrice * item.Quantity).ToString("N2"))</MudText>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Shipping & Payment -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div>
+                    <MudText Typo="Typo.subtitle1" Class="font-bold mb-2">Shipping Address</MudText>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <MudText Class="text-gray-700 whitespace-pre-line">@Order.ShippingAddress</MudText>
+                    </div>
+                </div>
+                <div>
+                    <MudText Typo="Typo.subtitle1" Class="font-bold mb-2">Payment Method</MudText>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <div class="bg-white border rounded-md w-12 h-8 flex items-center justify-center mr-3">
+                                <MudIcon Icon="@Icons.Material.Filled.CreditCard" Class="text-gray-700" />
+                            </div>
+                            <MudText Class="font-medium">@Order.PaymentMethod</MudText>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tracking Map -->
+            @if (Order.Status == OrderStatus.SHIPPED)
+            {
+                <div class="mb-8">
+                    <MudText Typo="Typo.subtitle1" Class="font-bold mb-4">Tracking</MudText>
+                    <div class="bg-gray-200 border-2 border-dashed rounded-xl w-full h-48 flex items-center justify-center text-gray-500">
+                        <div class="text-center">
+                            <MudIcon Icon="@Icons.Material.Filled.Map" Class="text-4xl mx-auto mb-2" />
+                            <p>Package Tracking Map</p>
+                            <p class="text-sm mt-2">In a real application, this would show a map with delivery progress</p>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Actions -->
+            <div class="flex flex-wrap gap-3">
+                @if (Order.Status == OrderStatus.PENDING || Order.Status == OrderStatus.PROCESSING)
+                {
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Cancel" OnClick="CancelOrder" Class="flex-1">Cancel Order</MudButton>
+                }
+
+                @if (Order.Status == OrderStatus.DELIVERED)
+                {
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Replay" OnClick="SubmitReorder" Class="flex-1">Reorder Items</MudButton>
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.AssignmentReturn" OnClick="SubmitReturn" Class="flex-1">Return Items</MudButton>
+                }
+
+                @if (Order.Status == OrderStatus.CANCELLED)
+                {
+                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ReportProblem" OnClick="ReportIssue" Class="flex-1">Report Issue</MudButton>
+                }
+
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.ContactSupport" OnClick="ContactSupport" Class="flex-1">Contact Support</MudButton>
+            </div>
+        </div>
+    </DialogContent>
+
+    <DialogActions>
+        @*@if (Order.Status == OrderStatus.PENDING || Order.Status == OrderStatus.PROCESSING)
+        {
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="CancelOrder">Cancel Order</MudButton>
+        }
+        @if (Order.Status == OrderStatus.DELIVERED)
+        {
+            <MudButton Variant="Variant.Text" OnClick="SubmitReorder">Reorder</MudButton>
+            <MudButton Variant="Variant.Text" OnClick="SubmitReturn">Return Items</MudButton>
+        }
+        @if (Order.Status == OrderStatus.CANCELLED)
+        {
+            <MudButton Variant="Variant.Text" OnClick="ReportIssue">Report Issue</MudButton>
+        }
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ContactSupport" StartIcon="@Icons.Material.Filled.ContactSupport">Contact Support</MudButton>*@
+        <MudButton Variant="Variant.Text" OnClick="Close">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public Order Order { get; set; } = default!;
+    [Parameter] public EventCallback OnReorder { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Inject] public ISnackbar Snackbar { get; set; }
+    [CascadingParameter] public Orders Parent { get; set; }
+
+    private string GetStatusBadgeClass(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.PENDING => "bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium tracking-widest",
+            OrderStatus.PROCESSING => "bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium tracking-widest",
+            OrderStatus.SHIPPED => "bg-teal-100 text-teal-800 px-2 py-1 rounded-full text-xs font-medium tracking-widest",
+            OrderStatus.DELIVERED => "bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full text-xs font-medium tracking-widest",
+            OrderStatus.CANCELLED => "bg-stone-100 text-stone-800 px-2 py-1 rounded-full text-xs font-medium tracking-widest",
+            _ => "bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium tracking-widest"
+        };
+    }
+
+    private string GetProgressBarClass(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.PROCESSING => "bg-blue-500",
+            OrderStatus.SHIPPED => "bg-teal-500",
+            _ => "bg-gray-500"
+        };
+    }
+
+    private DateTime GetDeliveryETA()
+    {
+        return Parent?.GetDeliveryETA(Order) ?? Order.OrderDate.AddDays(5);
+    }
+
+    private async Task CancelOrder()
+    {
+        try
+        {
+            await OrderService.CancelOrderAsync(Order.Id);
+            Snackbar.Add("Order cancelled successfully", Severity.Success);
+            await OnClose.InvokeAsync();
+            StateHasChanged();
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error cancelling order: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task SubmitReorder()
+    {
+        await OnReorder.InvokeAsync(Order);
+        Snackbar.Add("Reorder placed successfully", Severity.Success);
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private Task SubmitReturn()
+    {
+        Snackbar.Add("Return request submitted", Severity.Info);
+        MudDialog.Close(DialogResult.Ok(false));
+        return Task.CompletedTask;
+    }
+
+    private Task ReportIssue()
+    {
+        Snackbar.Add("Issue reported to our support team", Severity.Info);
+        MudDialog.Close();
+        return Task.CompletedTask;
+    }
+
+    private void ContactSupport() => Navigation.NavigateTo("/contact");
+
+    private void Close() => MudDialog.Close();
+}
+

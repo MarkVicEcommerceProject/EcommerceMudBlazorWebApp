@@ -28,12 +28,16 @@ builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+        
+    })
+    .AddGoogle(googleoptions =>
+    {
+        googleoptions.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+        googleoptions.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
     })
     .AddIdentityCookies();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-/*builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));*/
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -48,7 +52,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICategoryService,CategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICartService, CartService>();
-builder.Services.AddOrderServices(useMock: false);
+builder.Services.AddScoped<IOrderService, EfOrderService>();
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddScoped<CartStateService>();
 

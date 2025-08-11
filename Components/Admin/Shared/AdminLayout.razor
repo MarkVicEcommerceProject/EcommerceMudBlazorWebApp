@@ -9,15 +9,15 @@
 <MudLayout>
     <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.h5" Class="ml-3">blazored Electronics</MudText>
+        <MudText Typo="Typo.h5" Class="ml-3 text-2xl font-bold">Blazored Electronics</MudText>
         <MudSpacer />
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
     </MudAppBar>
-    <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+    <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2" Variant="@DrawerVariant.Mini" OpenMiniOnHover="true" Breakpoint="Breakpoint.None">
         <NavMenu />
     </MudDrawer>
-    <MudMainContent Class="pt-16 p-4 ">
+    <MudMainContent Class="pt-16 p-4" Style="padding: 10px 10px;">
         @Body
     </MudMainContent>
 </MudLayout>
@@ -31,7 +31,7 @@
 
 @code {
     private bool _drawerOpen = true;
-    private bool _isDarkMode = true;
+    private bool _isDarkMode = false;
     private MudTheme? _theme = null;
 
     protected override void OnInitialized()
@@ -58,7 +58,7 @@
 
     private readonly PaletteLight _lightPalette = new()
     {
-        Background = "#F8FFE5",
+        Background = "#e7ebe8",
         Black = "#110e2d",
         AppbarText = "#424242",
         AppbarBackground = "rgba(255,255,255,0.8)",

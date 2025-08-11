@@ -1,0 +1,368 @@
+@page "/admin/orders"
+@using ECommerceMudblazorWebApp.Models
+@using ECommerceMudblazorWebApp.Services.Orders
+@using ECommerceMudblazorWebApp.Components.Admin.Pages.Orders
+@inject IOrderService OrderService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudGrid>
+    <MudItem xs="12" md="6">
+        <MudText Typo="Typo.h4" Class="my-2 font-inter md:text-center">Orders</MudText>
+    </MudItem>
+    <MudItem xs="12" md="6" Class="d-flex justify-md-end">
+        <MudSelect T="string" 
+                ValueChanged="@(async range => {
+                    selectedDateRange = range;
+                    UpdateDateRange();
+                    await CalculateAnalytics();
+                })"
+                Label="Date Range" Style="width:200px">
+            <MudSelectItem Value="@($"today")">Today</MudSelectItem>
+            <MudSelectItem Value="@($"7days")">Last 7 Days</MudSelectItem>
+            <MudSelectItem Value="@($"30days")">Last 30 Days</MudSelectItem>
+            <MudSelectItem Value="@($"custom")">Custom</MudSelectItem>
+        </MudSelect>
+        @if (selectedDateRange == "custom")
+        {
+            <MudDatePicker DateChanged="@(async custom =>{
+                                startDate = custom ?? DateTime.Now;
+                                await CalculateAnalytics();
+                            })"
+                            Label="Start" Class="ml-2" />
+            <MudDatePicker DateChanged="@(async custom =>{
+                                endDate = custom ?? DateTime.Now;
+                                await CalculateAnalytics();
+                            })" Label="End" Class="ml-2" />
+        }
+    </MudItem>
+</MudGrid>
+
+<MudGrid Spacing="2" Class="mt-4">
+    <MudItem xs="12" sm="6" md="3">
+        <SummaryCard Title="Total Orders" 
+                    Value="@totalOrders.ToString()" 
+                    Trend="@totalOrdersTrend"
+                    Icon="@Icons.Material.Filled.ReceiptLong" />
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <SummaryCard Title="Total Revenue" 
+                    Value="@($"{totalRevenue.ToString("N2")}")" 
+                    Trend="@revenueTrend"
+                    Icon="@Icons.Material.Filled.Payments" />
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <SummaryCard Title="Fulfilled" 
+                    Value="@fulfilledOrders.ToString()" 
+                    Trend="@fulfilledTrend"
+                    Icon="@Icons.Material.Filled.LocalShipping" />
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <SummaryCard Title="Pending" 
+                    Value="@pendingOrders.ToString()" 
+                    Trend="@pendingTrend"
+                    Icon="@Icons.Material.Filled.PendingActions" />
+    </MudItem>
+</MudGrid>
+
+<div class="mt-6">
+    <MudChipSet T="string"
+                SelectedValueChanged="@(async value =>{
+                    selectedStatus = value ?? "all";
+                    await CalculateAnalytics();
+                })" Class="mb-4">
+        <MudChip Value="@($"all")">All</MudChip>
+        <MudChip Value="@OrderStatus.PENDING.ToString()">@OrderStatus.PENDING.ToString()</MudChip>
+        <MudChip Value="@OrderStatus.PROCESSING.ToString()">@OrderStatus.PROCESSING.ToString()</MudChip>
+        <MudChip Value="@OrderStatus.SHIPPED.ToString()">@OrderStatus.SHIPPED.ToString()</MudChip>
+        <MudChip Value="@OrderStatus.DELIVERED.ToString()">@OrderStatus.DELIVERED.ToString()</MudChip>
+        <MudChip Value="@OrderStatus.CANCELLED.ToString()">@OrderStatus.CANCELLED.ToString()</MudChip>
+        <MudButton Variant="Variant.Outlined" 
+                EndIcon="@Icons.Material.Filled.Add"
+                OnClick="AddOrder"
+                Class="ml-2">
+            Add Order
+        </MudButton>
+    </MudChipSet>
+
+    <MudTable @ref="table" Items="filteredOrders" Hover="true" Striped="true" SortLabel="Sort By" Loading="@loading">
+        <ToolBarContent>
+            <MudTextField @bind-Value="searchString" Placeholder="Search by Order ID or Customer..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true" />
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>Order ID</MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<Order, object>(x => x.OrderDate)" Direction="@sortDirection">Date</MudTableSortLabel>
+            </MudTh>
+            <MudTh>Customer</MudTh>
+            <MudTh>Total</MudTh>
+            <MudTh>Items</MudTh>
+            <MudTh>Payment</MudTh>
+            <MudTh>Status</MudTh>
+            <MudTh>Actions</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>#@context.Id</MudTd>
+            <MudTd DataLabel="OrderDate">@context.OrderDate.ToString("dd MMM, yyyy")</MudTd>
+            <MudTd>@context.User?.Email.Split("@")[0]</MudTd>
+            <MudTd>Ksh @context.TotalAmount.ToString("N2")</MudTd>
+            <MudTd>@context.OrderItems.Count items</MudTd>
+            <MudTd>@context.PaymentMethod</MudTd>
+            <MudTd>
+                <MudChip T="OrderStatus" 
+                        Color="@GetStatusColor(context.Status)" 
+                        Class="px-3 py-1 text-xs capitalize">
+                    @context.Status.ToString()
+                </MudChip>
+            </MudTd>
+            <MudTd DataLabel="Actions">
+                <MudTooltip Text="View">
+                    <MudIconButton 
+                        Icon="@Icons.Material.Filled.Visibility"
+                        Color="Color.Primary"
+                        OnClick="@(e => ViewOrder(context.Id))" />
+                </MudTooltip>
+
+                <!-- Edit Button -->
+                <MudTooltip Text="Edit">
+                    <MudIconButton 
+                        Icon="@Icons.Material.Filled.Edit"
+                        Color="Color.Tertiary"
+                        OnClick="@(e => EditOrder(context.Id))" />
+                </MudTooltip>
+
+                <!-- Cancel Button -->
+                <MudTooltip Text="Cancel">
+                    <MudIconButton 
+                        Icon="@Icons.Material.Filled.Cancel"
+                        Color="Color.Error"
+                        Disabled="@(context.Status == OrderStatus.CANCELLED)"
+                        OnClick="@(async e => await CancelOrder(context.Id))" />
+                </MudTooltip>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager RowsPerPageString="true" PageSizeOptions="@(new[] {10, 25, 50})" />
+        </PagerContent>
+    </MudTable>
+</div>
+
+@code{
+    private List<Order> allOrders = new();
+    private IEnumerable<Order> filteredOrders => allOrders
+        .Where(o => (selectedStatus == "all" || o.Status.ToString() == selectedStatus)
+            && (o.OrderDate >= startDate && o.OrderDate <= endDate)
+            && (string.IsNullOrWhiteSpace(searchString)
+                || o.Id.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase)
+                || (o.User != null && o.User.Email.Contains(searchString, StringComparison.OrdinalIgnoreCase))))
+        .OrderByDescending(o => o.OrderDate)
+        .ToList();
+
+    private string selectedStatus = "all";
+    private string searchString = "";
+    private bool loading;
+    private MudTable<Order> table;
+    private SortDirection sortDirection = SortDirection.Descending;
+    private string sortBy = "orderDate";
+
+    // Date range
+    private string selectedDateRange = "30days";
+    private DateTime startDate = DateTime.UtcNow.AddDays(-30);
+    private DateTime endDate = DateTime.UtcNow;
+    private DateTime? customStartDate;
+    private DateTime? customEndDate;
+
+    // Summary metrics
+    private int totalOrders;
+    private decimal totalRevenue;
+    private int fulfilledOrders;
+    private int pendingOrders;
+    private string totalOrdersTrend = "+0%";
+    private string revenueTrend = "+0%";
+    private string fulfilledTrend = "+0%";
+    private string pendingTrend = "+0%";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrders();
+        await CalculateAnalytics();
+    }
+    private async Task LoadOrders()
+    {
+        loading = true;
+        StateHasChanged();
+        try
+        {
+            allOrders = (await OrderService.GetAllOrdersAsync()).ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading orders: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task CalculateAnalytics()
+    {
+        try
+        {
+            // Get current period data
+            var currentOrders = allOrders
+            .Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate)
+            .ToList();
+
+            totalOrders = currentOrders.Count;
+            totalRevenue = currentOrders.Sum(o => o.TotalAmount);
+            fulfilledOrders = currentOrders.Count(o => o.Status == OrderStatus.DELIVERED || o.Status == OrderStatus.SHIPPED);
+            pendingOrders = currentOrders.Count(o => o.Status == OrderStatus.PENDING || o.Status == OrderStatus.PROCESSING);
+
+            // Calculate previous period for trends
+            var s = startDate.Date;
+            var e = endDate.Date;
+
+            if (e < s)
+            {
+                (s, e) = (e, s);
+            }
+
+            int lengthInclusive = (e - s).Days + 1;
+
+            var previousEnd = s.AddDays(-1);
+            var previousStart = s.AddDays(-lengthInclusive);
+
+            var previousOrders = allOrders
+            .Where(o => o.OrderDate >= previousStart && o.OrderDate <= previousEnd)
+            .ToList();
+
+            totalOrdersTrend = CalculateTrend(currentOrders.Count, previousOrders.Count);
+            revenueTrend = CalculateTrend(
+            currentOrders.Sum(o => o.TotalAmount),
+            previousOrders.Sum(o => o.TotalAmount),
+            true
+            );
+            fulfilledTrend = CalculateTrend(
+            currentOrders.Count(o => o.Status == OrderStatus.DELIVERED || o.Status == OrderStatus.SHIPPED),
+            previousOrders.Count(o => o.Status == OrderStatus.DELIVERED || o.Status == OrderStatus.SHIPPED)
+            );
+            pendingTrend = CalculateTrend(
+            currentOrders.Count(o => o.Status == OrderStatus.PENDING || o.Status == OrderStatus.PROCESSING),
+            previousOrders.Count(o => o.Status == OrderStatus.PENDING || o.Status == OrderStatus.PROCESSING)
+            );
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error calculating analytics: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private string CalculateTrend(decimal current, decimal previous, bool isCurrency = false)
+    {
+        if (previous == 0)
+        {
+            if (current == 0) return "No change vs previous period";
+            return isCurrency ? $"+{current:N2} Ksh vs previous period (no prior data)" : $"+{Math.Round(current,1)} vs previous period (no prior data)";
+        }
+
+        var changePercent = ((current - previous) / previous) * 100m;
+        var sign = changePercent >= 0 ? "+" : "-";
+        var pct = Math.Round(Math.Abs(changePercent), 1).ToString() + "%";
+
+        if (isCurrency)
+        {
+            var diff = current - previous;
+            var diffFormatted = diff >= 0 ? $"+{diff:N2} ksh" :$"{diff.ToString("N2")} Ksh";
+            return $"{sign}{pct} ({diffFormatted}) vs previous period";
+        }
+        else
+        {
+            return $"{sign}{pct} vs previous period";
+        }
+    }
+
+
+    private Color GetStatusColor(OrderStatus status)
+    {
+        return status switch
+        {
+            OrderStatus.PENDING => Color.Warning,
+            OrderStatus.PROCESSING => Color.Info,
+            OrderStatus.SHIPPED => Color.Primary,
+            OrderStatus.DELIVERED => Color.Success,
+            OrderStatus.CANCELLED => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    private void AddOrder()
+    {
+        NavigationManager.NavigateTo("/admin/orders/new");
+    }
+
+    private void ViewOrder(int orderId)
+    {
+        NavigationManager.NavigateTo($"/admin/orders/{orderId}");
+    }
+
+    private void EditOrder(int orderId)
+    {
+        NavigationManager.NavigateTo($"/admin/orders/edit/{orderId}");
+    }
+    private async Task CancelOrder(int orderId)
+    {
+        var parameters = new DialogParameters{
+            { "Content", "Are you sure you want to cancel this order?" },
+            { "ButtonText", "Cancel Order" },
+            { "Color", Color.Error }
+        };
+
+        var options = new DialogOptions() { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+
+        var dialogReference = await DialogService.ShowAsync<ConfirmDialog>("Cancel Order", parameters, options);
+        var result = await dialogReference.Result;
+
+        if (!result.Canceled)
+        {
+            try
+            {
+                await OrderService.CancelOrderAsync(orderId);
+                await LoadOrders();
+                await CalculateAnalytics();
+                Snackbar.Add("Order cancelled successfully", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Error cancelling order: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private void UpdateDateRange()
+    {
+        switch (selectedDateRange)
+        {
+            case "today":
+                startDate = DateTime.UtcNow.Date;
+                endDate = DateTime.UtcNow.Date.AddDays(1).AddTicks(-1);
+                break;
+            case "7days":
+                startDate = DateTime.UtcNow.AddDays(-7).Date;
+                endDate = DateTime.UtcNow.Date.AddDays(1).AddTicks(-1);
+                break;
+            case "30days":
+                startDate = DateTime.UtcNow.AddDays(-30).Date;
+                endDate = DateTime.UtcNow.Date.AddDays(1).AddTicks(-1);
+                break;
+            case "custom":
+                if (customStartDate.HasValue && customEndDate.HasValue)
+                {
+                    startDate = customStartDate.Value.Date;
+                    endDate = customEndDate.Value.Date.AddDays(1).AddTicks(-1);
+                }
+                break;
+        }
+    }
+}

@@ -14,7 +14,7 @@
                 if (_cartCount != value)
                 {
                     _cartCount = value;
-                    _ = NotifyStateChangedAsync(); // Fire and forget
+                    _ = NotifyStateChangedAsync();
                 }
             }
         }
@@ -29,7 +29,6 @@
                 }
                 catch (Exception ex)
                 {
-                    // Optionally log the error
                     Console.Error.WriteLine($"CartState OnChange error: {ex.Message}");
                 }
             }
