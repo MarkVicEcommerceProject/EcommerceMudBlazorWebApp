@@ -1,6 +1,7 @@
 using ECommerceMudblazorWebApp.Data;
 using ECommerceMudblazorWebApp.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace ECommerceMudblazorWebApp.Components.Admin.Services
 {
@@ -131,12 +132,34 @@ namespace ECommerceMudblazorWebApp.Components.Admin.Services
                 throw;
             }
         }
+        public async Task<IEnumerable<InventoryAlert>> GetInventoryAlertsAsync(int threshold = 10)
+        {
+            await using var db = _contextFactory.CreateDbContext();
 
+            var list = await db.Products
+                .Where(p => p.StockQuantity <= threshold)
+                .OrderBy(p => p.StockQuantity)
+                .Select(p => new InventoryAlert
+                {
+                    ProductId = p.Id,
+                    ProductName = p.Name,
+                    StockLeft = p.StockQuantity
+                })
+                .ToListAsync();
+
+            return list;
+        }
+
+
+
+        //Helpers
         public async Task<string> GenerateSKUAsync(string category, string name)
         {
             // This method doesn't require DbContext
             var sku = $"{category[..3].ToUpper()}-{name[..3].ToUpper()}-{Guid.NewGuid().ToString()[..4].ToUpper()}";
             return await Task.FromResult(sku);
         }
+
+        
     }
 }

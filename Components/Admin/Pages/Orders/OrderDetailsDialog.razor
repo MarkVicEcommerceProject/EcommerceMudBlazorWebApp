@@ -1,0 +1,86 @@
+﻿@using ECommerceMudblazorWebApp.Models
+@using System.Globalization
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+
+<MudDialog>
+    <DialogContent>
+        <MudPaper Class="pa-6">
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.h5">Order Details — #@Order?.Id</MudText>
+                <MudText Typo="Typo.subtitle2">Placed: @Order?.OrderDate.ToLocalTime().ToString("dd MMM yyyy HH:mm")</MudText>
+
+                <MudDivider />
+
+                <MudGrid>
+                    <MudItem xs="12" sm="6">
+                        <MudText Typo="Typo.subtitle2" Class="mb-1">Customer</MudText>
+                        <MudText>@Order?.User?.Email</MudText>
+                        <MudText Typo="Typo.caption">UserId: @Order?.UserId</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudText Typo="Typo.subtitle2" Class="mb-1">Status</MudText>
+                        <MudChip T="string" Class="px-3 py-1" Color="@(GetStatusColor(Order?.Status ?? OrderStatus.PENDING))">@Order?.Status.ToString()</MudChip>
+                        <MudText Typo="Typo.caption">Payment: @Order?.PaymentMethod</MudText>
+                        <MudText>Delivery Date: @Order?.DeliveredDate</MudText>
+                    </MudItem>
+                </MudGrid>
+
+                <MudDivider />
+
+                <MudText Typo="Typo.subtitle2">Shipping Address</MudText>
+                <MudText>@Order?.ShippingAddress</MudText>
+
+                <MudDivider />
+
+                <MudText Typo="Typo.subtitle2">Items</MudText>
+                <MudTable Items="Order?.OrderItems" Dense="true" Hover="true">
+                    <HeaderContent>
+                        <MudTh>Product</MudTh>
+                        <MudTh>Unit Price</MudTh>
+                        <MudTh>Qty</MudTh>
+                        <MudTh>Subtotal</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Product?.Name</MudTd>
+                        <MudTd>Ksh @context.UnitPrice.ToString("N2")</MudTd>
+                        <MudTd>@context.Quantity</MudTd>
+                        <MudTd>@((context.UnitPrice * context.Quantity).ToString("C", CultureInfo.CreateSpecificCulture("sw-KE")))</MudTd>
+                    </RowTemplate>
+                </MudTable>
+
+                <MudDivider />
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.h6">
+                        Total: @Order?.TotalAmount.ToString("C", CultureInfo.CreateSpecificCulture("sw-KE"))
+                    </MudText>
+                    <div>
+                        <MudButton Variant="Variant.Outlined" OnClick="Close">Close</MudButton>
+                        <MudButton Variant="Variant.Filled" OnClick="Edit">Edit</MudButton>
+                    </div>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public Order? Order { get; set; }
+
+    void Close() => MudDialog?.Close();
+    void Edit() {
+        MudDialog?.Close(DialogResult.Ok(true));
+    }
+
+    Color GetStatusColor(OrderStatus status) => status switch
+    {
+        OrderStatus.PENDING => Color.Warning,
+        OrderStatus.PROCESSING => Color.Info,
+        OrderStatus.SHIPPED => Color.Primary,
+        OrderStatus.DELIVERED => Color.Success,
+        OrderStatus.CANCELLED => Color.Error,
+        OrderStatus.RETURNED => Color.Secondary,
+        _ => Color.Default
+    };
+}

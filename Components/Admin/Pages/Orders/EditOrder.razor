@@ -1,0 +1,159 @@
+﻿@page "/admin/orders/edit/{OrderId:int}"
+@using System.ComponentModel.DataAnnotations
+@using ECommerceMudblazorWebApp.Models
+@using ECommerceMudblazorWebApp.Services.Orders
+@inject NavigationManager Navigation
+@inject IOrderService OrderService
+@inject ISnackbar Snackbar
+
+<MudPaper Class="pa-6 mx-auto" Style="max-width:900px">
+    <MudText Typo="Typo.h4" Class="mb-4">Edit Order — #@Input.Id</MudText>
+
+    <EditForm Model="Input" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <MudGrid>
+            <MudItem xs="12" sm="8">
+                <MudTextField @bind-Value="Input.ShippingAddress" Label="Shipping Address" Required="true" Lines="3" />
+                <MudTextField @bind-Value="Input.PaymentMethod" Label="Payment Method" Required="true" Class="mt-3" />
+                <MudTextField @bind-Value="Input.TrackingNumber" Label="Tracking Number (optional)" Class="mt-3" />
+            </MudItem>
+
+            <MudItem xs="12" sm="4">
+                <MudSelect T="OrderStatus" Label="Status" @bind-Value="Input.Status" Dense="true" Variant="Variant.Outlined" Required="true">
+                    @foreach (OrderStatus s in Enum.GetValues(typeof(OrderStatus)))
+                    {
+                        <MudSelectItem Value="@s">@s.ToString()</MudSelectItem>
+                    }
+                </MudSelect>
+
+                <MudText Typo="Typo.subtitle2" Class="mt-3">Placed</MudText>
+                <MudText>@Input.OrderDate.ToLocalTime().ToString("dd MMM yyyy HH:mm")</MudText>
+
+                <MudText Typo="Typo.subtitle2" Class="mt-3">Delivered</MudText>
+                <MudText>@(Input.DeliveredDate == null ? "—" : Input.DeliveredDate.ToLocalTime().ToString("dd MMM yyyy HH:mm"))</MudText>
+
+                <MudStack Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.Center" Spacing="8" >
+                    <div>
+                        <MudText Typo="Typo.subtitle2">Items</MudText>
+                        <MudText>@(Input.OrderItems?.Count ?? 0)</MudText>
+                    </div>
+                    <div>
+                        <MudText Typo="Typo.subtitle2">Products</MudText>
+                        <MudText>
+                            @(string.Join(", ", Input.OrderItems?.Select(oi => oi.Product.Name) ?? Enumerable.Empty<string>()))
+                        </MudText>
+
+                    </div>
+                </MudStack>
+               
+            </MudItem>
+        </MudGrid>
+
+        <MudDivider Class="my-4" />
+
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.h6">Total: Ksh @(Input.TotalAmount.ToString("N2"))</MudText>
+            <div>
+                <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" ButtonType="ButtonType.Submit">Save changes</MudButton>
+            </div>
+        </MudStack>
+    </EditForm>
+</MudPaper>
+
+@code {
+    [Parameter] public int OrderId { get; set; }
+    private Order? order;
+    private InputModel Input = new();
+
+    private bool isSaving = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        order = await OrderService.GetOrderByIdAsync(OrderId);
+        if (order == null)
+        {
+            Snackbar.Add("Order not found", Severity.Error);
+            Navigation.NavigateTo("/admin/orders");
+            return;
+        }
+
+        Input = new InputModel
+        {
+            Id = order.Id,
+            ShippingAddress = order.ShippingAddress,
+            PaymentMethod = order.PaymentMethod,
+            OrderDate = order.OrderDate,
+            DeliveredDate = order.DeliveredDate,
+            Status = order.Status,
+            TotalAmount = order.TotalAmount,
+            OrderItems = order.OrderItems,
+        };
+    }
+
+    async Task SaveAsync()
+    {
+        if (order == null)
+        {
+            Snackbar.Add("Order not loaded", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            isSaving = true;
+            if (Input.Status == OrderStatus.DELIVERED)
+                Input.DeliveredDate = DateTime.UtcNow;
+
+            order.ShippingAddress = Input.ShippingAddress;
+            order.PaymentMethod = Input.PaymentMethod;
+            order.Status = Input.Status;
+            order.DeliveredDate = Input.DeliveredDate;
+
+            var success = await OrderService.UpdateOrderAsync(order);
+            if (success)
+            {
+                Snackbar.Add("Order updated", Severity.Success);
+                Navigation.NavigateTo("/admin/orders");
+            }
+            else
+            {
+                Snackbar.Add("Failed to save order", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving order: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    void Cancel() => Navigation.NavigateTo("/admin/orders");
+
+    private sealed class InputModel
+    {
+        public int Id { get; set; }
+
+        [Required(ErrorMessage = "Shipping address is required")]
+        public string ShippingAddress { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Payment method is required")]
+        public string PaymentMethod { get; set; } = string.Empty;
+
+        public DateTime OrderDate { get; set; }
+
+        public DateTime DeliveredDate { get; set; }
+
+        public OrderStatus Status { get; set; }
+        public decimal TotalAmount { get; set; }
+        public ICollection<OrderItem>? OrderItems { get; set; } = new List<OrderItem>();
+
+        // optional field
+        public string? TrackingNumber { get; set; }
+    }
+}

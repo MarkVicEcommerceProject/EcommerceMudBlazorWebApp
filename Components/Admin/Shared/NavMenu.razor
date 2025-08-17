@@ -2,14 +2,16 @@
 
 @inject NavigationManager NavigationManager
 
-<MudNavMenu Class="flex flex-col justify-between gap-3.5 align-middle">
-    <div>
-        <MudNavLink Href="/admin" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-        <MudNavLink Href="/admin/categories" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">Categories</MudNavLink>
-        <MudNavLink Href="/admin/products" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Products</MudNavLink>
-        <MudNavLink Href="/admin/orders" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Orders</MudNavLink>
+<MudNavMenu>
+    <section Class="flex flex-col justify-between gap-3.5 align-middle">
+        <div>
+        <MudNavLink Href="/admin" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home" IconColor="Color.Secondary">Home</MudNavLink>
+        <MudNavLink Href="/admin/categories" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Category">Categories</MudNavLink>
+        <MudNavLink Href="/admin/products" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ShoppingBag">Products</MudNavLink>
+        <MudNavLink Href="/admin/orders" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.ReceiptLong">Orders</MudNavLink>
+        <MudNavLink Href="/admin/inventory" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Inventory">Inventory</MudNavLink>
     </div>
-    <MudSpacer/>
+    
     <div>
         <AuthorizeView>
             <Authorized>
@@ -18,16 +20,14 @@
                     <AntiforgeryToken />
                     <input type="hidden" name="ReturnUrl" value="@currentUrl" />
                     <button type="submit" class="mud-nav-link mud-ripple">
-                        <MudIcon Icon="@Icons.Material.Filled.Logout" Color="Color.Info" Class="mr-4"></MudIcon> Logout
+                        <MudIcon Icon="@Icons.Material.Filled.Logout" Color="Color.Error" Class="mr-4"></MudIcon> Logout
                     </button>
                 </form>
             </Authorized>
-            <NotAuthorized>
-                <MudNavLink Href="Account/Register" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">Register</MudNavLink>
-                <MudNavLink Href="Account/Login" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Password">Login</MudNavLink>
-            </NotAuthorized>
         </AuthorizeView>
-    </div>   
+    </div>
+    </section>
+       
 </MudNavMenu>
 
 @code {

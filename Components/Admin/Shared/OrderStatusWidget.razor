@@ -1,0 +1,21 @@
+@using ECommerceMudblazorWebApp.Models
+<MudPaper Class="pa-3" Elevation="1">
+    <div class="d-flex align-center">
+        <MudAvatar Color="@Color" Class="mr-3">
+            <MudIcon Icon="@Icon" />
+        </MudAvatar>
+        <div>
+            <MudText Typo="Typo.body1" Class="font-weight-bold">@Count</MudText>
+            <MudText Typo="Typo.caption">@Status</MudText>
+        </div>
+    </div>
+</MudPaper>
+
+@code {
+    [Parameter] public OrderStatus Status { get; set; }
+    [Parameter] public int Count { get; set; }
+    [Parameter] public Color Color { get; set; }
+    [Parameter] public string Icon { get; set; }
+
+
+}

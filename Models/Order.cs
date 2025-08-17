@@ -19,6 +19,8 @@ namespace ECommerceMudblazorWebApp.Models
         [Required]
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
 
+        public DateTime DeliveredDate { get; set; }
+
         [Required]
         public OrderStatus Status { get; set; }
 
@@ -43,6 +45,7 @@ namespace ECommerceMudblazorWebApp.Models
         PROCESSING,
         SHIPPED,
         DELIVERED,
-        CANCELLED
+        CANCELLED,
+        RETURNED
     }
 }

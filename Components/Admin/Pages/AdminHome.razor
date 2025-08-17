@@ -1,7 +1,554 @@
 @page "/admin"
 @using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
+@using System.Collections.Generic
+@using ECommerceMudblazorWebApp.Components.Admin.Shared
+@using ECommerceMudblazorWebApp.Components.Admin.Services.Customers
+@using ECommerceMudblazorWebApp.Services.Orders
+@using ECommerceMudblazorWebApp.Components.Admin.Services
+@using ECommerceMudblazorWebApp.Models
+@using System.Globalization
+
 @attribute [Authorize(Roles = "Admin")]
+
+@inject ICustomerService CustomerService
+@inject IOrderService OrderService
+@inject IProductService ProductService 
+@inject IDialogService DialogService
+@inject NavigationManager navigation
+@inject ISnackbar Snackbar
 
 <PageTitle>Admin Dashboard</PageTitle>
 
-<h1>Hello Admin</h1>
+    <MudGrid Class="mt-4">
+            <!-- Performance Overview Cards -->
+            <MudItem xs="12" sm="6" md="4" lg="2" Class="mb-4">
+                <DashboardCard Title="Total Revenue - All Orders" Value="@FormatCurrency(OrderAnalyticsData.TotalRevenue)"
+                       TrendText="@OrderAnalyticsData.RevenueTrend" Icon="@Icons.Material.Filled.AttachMoney"
+                            Background="background-color: var(--mud-palette-primary);" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="2" Class="mb-4">
+                <DashboardCard Title="Delivered Orders"
+                           Value="@OrderAnalyticsData.FulfilledOrders.ToString()"
+                           TrendText="@OrderAnalyticsData.FulfilledTrend"
+                           Icon="@Icons.Material.Filled.ShoppingCart"
+                           Background="background-color: var(--mud-palette-secondary);" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="2" Class="mb-4">
+                <DashboardCard Title="Total Sales (Delivered Orders)"
+                       Value="@FormatCurrency(OrderAnalyticsData.TotalSales)"
+                       TrendText="@OrderAnalyticsData.SalesTrend"
+                       Icon="@Icons.Material.Filled.AttachMoney"
+                       Background="background-color: var(--mud-palette-secondary);" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="2" Class="mb-4">
+                <DashboardCard Title="Customers" Value="@customerData.TotalCustomers.ToString()" 
+                               TrendText="@customerData.CustomerChange" Icon="@Icons.Material.Filled.People"
+                               Background="background-color: var(--mud-palette-tertiary);" />
+            </MudItem>
+            @*<MudItem xs="12" sm="6" md="4" lg="2" Class="mb-4">
+                <DashboardCard Title="Conversion" Value="@($"{metricsData.ConversionRate}%")"
+                       TrendText=@(metricsData.ConversionChange != 0
+                                              ? $"{(metricsData.ConversionChange >= 0 ? "+" : "-")}{Math.Abs(metricsData.ConversionChange):0.0}% vs previous period"
+                                              : "No change vs previous period") 
+                       Icon="@Icons.Material.Filled.TrendingUp"
+                       Background="background-color: var(--mud-palette-success);" />
+            </MudItem>*@
+            <MudItem xs="12" sm="6" md="4" lg="2" Class="mb-4">
+                <DashboardCard Title="AOV" Value="@FormatCurrency(metricsData.AverageOrderValue)"
+                       TrendText=@(metricsData.AovChange != 0
+                                              ? $"{(metricsData.AovChange >= 0 ? "+" : "-")}{Math.Abs(metricsData.AovChange):0.0}% vs previous period"
+                                              : "No change vs previous period") Icon="@Icons.Material.Filled.PointOfSale"
+                               Background="background-color: var(--mud-palette-warning);" />
+            </MudItem>
+            <MudItem xs="12" sm="6" md="4" lg="2" Class="mb-4">
+                <DashboardCard Title="Returns" Value="@($"{metricsData.ReturnRate}%")" 
+                               TrendText="@metricsData.ReturnChange.ToString()" Icon="@Icons.Material.Filled.Repeat"
+                               Background="background-color: var(--mud-palette-error);" />
+            </MudItem>
+            
+            <!-- Revenue Analytics Hub -->
+            <MudItem xs="12" lg="8" Class="mb-4">
+                <MudCard Class="">
+                    <MudCardHeader>
+                        <MudCardHeader Class="md:flex md:justify-between">
+                            <MudText Typo="Typo.h6" Class="mr-7">Revenue Analytics</MudText>
+                            <MudSelect T="string" Value="selectedTimeframe" ValueChanged="@(async (value) => await OnTimeframeChanged(value))"
+                                                Variant="Variant.Text" Label="Date Range" Dense="true">
+                                <MudSelectItem Value="@($"today")">Today</MudSelectItem>
+                                <MudSelectItem Value="@($"7days")">7 Days</MudSelectItem>
+                                <MudSelectItem Value="@($"30days")">30 Days</MudSelectItem>
+                                <MudSelectItem Value="@($"90days")">90 Days</MudSelectItem>
+                                <MudSelectItem Value="@($"365days")">Year</MudSelectItem>
+                            </MudSelect>
+                        </MudCardHeader>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudChart Class="mt-3" Height="450" ChartType="ChartType.Line" ChartOptions="@revenueChartOptions"
+                        XAxisLabels="@chartLabels" AxisChartOptions="_axisChartOptions"
+                                ChartSeries="@chartSeriesData" />
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            
+            <!-- Order Intelligence -->
+            <MudItem xs="12" lg="4" Class="mb-4">
+                <MudCard Class="">
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">Order Intelligence</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" OnClick="RefreshOrderData" />
+                    </MudCardHeader>
+
+                    <MudCardContent>
+                        <MudGrid>
+                            <MudItem xs="12" Class="mb-3">
+                                <OrderStatusWidget Status="OrderStatus.PENDING" Count="@orderStatusCounts.Pending"
+                                                   Color="Color.Info" Icon="@Icons.Material.Filled.HourglassFull" />
+                            </MudItem>
+                            <MudItem xs="12" Class="mb-3">
+                                <OrderStatusWidget Status="OrderStatus.PROCESSING" Count="@orderStatusCounts.Processing" 
+                                                   Color="Color.Info" Icon="@Icons.Material.Filled.HourglassFull" />
+                            </MudItem>
+                            <MudItem xs="12" Class="mb-3">
+                                <OrderStatusWidget Status="OrderStatus.SHIPPED" Count="@orderStatusCounts.Shipped" 
+                                                   Color="Color.Warning" Icon="@Icons.Material.Filled.LocalShipping" />
+                            </MudItem>
+                            <MudItem xs="12" Class="mb-3">
+                                <OrderStatusWidget Status="OrderStatus.DELIVERED" Count="@orderStatusCounts.Delivered" 
+                                                   Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle" />
+                            </MudItem>
+                            <MudItem xs="12">
+                                <OrderStatusWidget Status="OrderStatus.CANCELLED" Count="@orderStatusCounts.Cancelled" 
+                                                   Color="Color.Error" Icon="@Icons.Material.Filled.Cancel" />
+                            </MudItem>
+                        </MudGrid>
+                        
+                        <div class="mt-4">
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Regional Distribution</MudText>
+                            <MudChart Height="200" ChartType="ChartType.Pie" InputData="@orderRegionData" />
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            
+            <!-- Product Performance -->
+            <MudItem xs="12" md="6" Class="mb-4">
+                <MudCard>
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">Product Performance</MudText>
+                        <MudButton Variant="Variant.Outlined" Size="Size.Small" EndIcon="@Icons.Material.Filled.ArrowForward" 
+                                   OnClick="@(() => navigation.NavigateTo("/admin/products"))">
+                            View All
+                        </MudButton>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudTable Items="@topProducts" Hover="true" Elevation="0">
+                            <HeaderContent>
+                                <MudTh>Product</MudTh>
+                                <MudTh>Category</MudTh>
+                                <MudTh align="Align.End">Revenue</MudTh>
+                                <MudTh align="Align.End">Units</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Product">
+                                    <div class="d-flex align-center">
+                                        <MudAvatar Size="Size.Small" Class="mr-2">
+                                            <MudImage Src="@context.ImagePath" />
+                                        </MudAvatar>
+                                        <MudText>@context.Name</MudText>
+                                    </div>
+                                </MudTd>
+                                <MudTd DataLabel="Category">@context.Category</MudTd>
+                                <MudTd DataLabel="Revenue" align="Align.End">@FormatCurrency(context.Revenue)</MudTd>
+                                <MudTd DataLabel="Units" align="Align.End">@context.UnitsSold</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                        
+                        <div class="mt-4">
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Inventory Alerts</MudText>
+                            <MudList T="string" Dense="true">
+                                @foreach (var alert in inventoryAlerts)
+                                {
+                                    <MudListItem>
+                                        <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" />
+                                        <MudText>
+                                            <MudText>@alert.ProductName</MudText>
+                                            <MudText Typo="Typo.caption">Only @alert.StockLeft in stock</MudText>
+                                        </MudText>
+                                        <MudButton Variant="Variant.Outlined" Size="Size.Small" 
+                                                OnClick="@(() => ReorderProduct(alert.ProductId))">
+                                            Reorder
+                                        </MudButton>
+                                    </MudListItem>
+                                }
+                            </MudList>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            
+            <!-- Customer Insights -->
+            <MudItem xs="12" md="6" Class="mb-4">
+                <MudCard>
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">Customer Insights</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid>
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.subtitle2" Class="mb-2">Acquisition Sources</MudText>
+                                <MudChart Height="200" ChartType="ChartType.Donut" InputData="@acquisitionData" />
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <MudText Typo="Typo.subtitle2" Class="mb-2">Customer Type</MudText>
+                                <MudChart Height="200" ChartType="ChartType.Pie" InputData="@customerTypeData" InputLabels="@customerTypeLabels" />
+                            </MudItem>
+                        </MudGrid>
+                        
+                        <div class="mt-4">
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Top Customers</MudText>
+                            <MudList T="string" Dense="true">
+                                @foreach (var customer in topCustomers)
+                                {
+                            <MudListItem
+                                Class="@($"{(!IsDarkMode ? "bg-gradient-to-br from-green-100 via-white to-green-200" : "")}")">
+                                        <MudAvatar Size="Size.Small" Color="Color.Tertiary" Class="mr-2">@customer.Initials</MudAvatar>
+                                        <MudText>
+                                            <MudText Class="font-bold">@customer.Name</MudText>
+                                            <MudText Typo="Typo.caption">@customer.Email</MudText>
+                                        </MudText>
+                                        <MudText Typo="Typo.body2">@($"{FormatCurrency(customer.TotalSpent)} Ksh")</MudText>
+                                    </MudListItem>
+                                }
+                            </MudList>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            
+            <!-- Operational Health -->
+            <MudItem xs="12" md="6" Class="mb-4">
+                <MudCard>
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">Operational Health</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <div class="d-flex justify-space-between mb-4">
+                            <div>
+                                <MudText Typo="Typo.subtitle2">System Uptime</MudText>
+                                <MudText Typo="Typo.h4">99.98%</MudText>
+                            </div>
+                            <MudProgressCircular Value="99.98" Size="Size.Large" Color="Color.Success" />
+                        </div>
+                        
+                        <div class="mb-4">
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Fulfillment Performance</MudText>
+                            <MudProgressLinear Value="@fulfillmentData.AvgProcessingTimePercent" Color="Color.Info" 
+                                               Class="mb-1" Style="height: 8px;" />
+                            <div class="d-flex justify-space-between">
+                                <MudText Typo="Typo.caption">Avg. Processing: @($"{fulfillmentData.AvgProcessingHours}h")</MudText>
+                                <MudText Typo="Typo.caption">Target: 24h</MudText>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Pending Actions</MudText>
+                            <MudList T="string" Dense="true">
+                                <MudListItem>
+                                    <MudIcon Icon="@Icons.Material.Filled.Comment" Color="Color.Info" />
+                                    <MudText>12 unanswered customer inquiries</MudText>
+                                    <MudBadge Content="@($"High")" Color="Color.Error" />
+                                </MudListItem>
+                                <MudListItem>
+                                    <MudIcon Icon="@Icons.Material.Filled.AssignmentReturn" Color="Color.Warning" />
+                                    <MudText>8 returns to process</MudText>
+                                </MudListItem>
+                                <MudListItem>
+                                    <MudIcon Icon="@Icons.Material.Filled.Inventory" Color="Color.Info" />
+                                    <MudText>Inventory audit required</MudText>
+                                </MudListItem>
+                            </MudList>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+            
+            <!-- Security & AI Insights -->
+            <MudItem xs="12" md="6" Class="mb-4">
+                <MudCard>
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h6">Security & AI Insights</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudGrid>
+                            <MudItem xs="12" sm="6">
+                                <div class="text-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.Security" Size="Size.Large" 
+                                             Color="securityStatus.IsSecure ? Color.Success : Color.Warning" 
+                                             Class="mb-2" />
+                                    <MudText Typo="Typo.subtitle2">Security Status</MudText>
+                                    <MudText Class="mb-2">@(securityStatus.IsSecure ? "All Systems Secure" : "Attention Required")</MudText>
+                                    <MudChipSet T="string">
+                                        <MudChip Text="PCI Compliant" Color="securityStatus.PciCompliant ? Color.Success : Color.Error" />
+                                        <MudChip Text="Encrypted" Color="securityStatus.Encrypted ? Color.Success : Color.Error" />
+                                    </MudChipSet>
+                                </div>
+                            </MudItem>
+                            <MudItem xs="12" sm="6">
+                                <div class="text-center">
+                                    <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" Size="Size.Large" 
+                                             Color="Color.Info" Class="mb-2" />
+                                    <MudText Typo="Typo.subtitle2">AI Predictions</MudText>
+                                    <MudText Class="mb-2">Next 7 Days: @FormatCurrency(aiData.PredictedRevenue)</MudText>
+                                    <MudButton Variant="Variant.Outlined" Size="Size.Small" 
+                                               OnClick="ShowAiInsights">View Insights</MudButton>
+                                </div>
+                            </MudItem>
+                        </MudGrid>
+                        
+                        <div class="mt-4">
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">Opportunity Radar</MudText>
+                            <MudChipSet T="string" Class="justify-center">
+                                <MudChip Text="Promote Gaming Consoles" Color="Color.Info" />
+                                <MudChip Text="Smart Home Bundle" Color="Color.Success" />
+                                <MudChip Text="Monitor Refresh" Color="Color.Warning" />
+                            </MudChipSet>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+@if (showAiDialog)
+{
+    <MudDialog @bind-IsVisible="showAiDialog" Title="AI Insights">
+        <DialogContent>
+            <MudText>Predicted revenue for the next 7 days: @FormatCurrency(aiData.PredictedRevenue)</MudText>
+            <div class="mt-3">
+                <MudText Typo="Typo.subtitle2">Key Recommendations:</MudText>
+                <MudList T="string">
+                    <MudListItem>
+                        <MudIcon Icon="@Icons.Material.Filled.Star" Color="Color.Warning" />
+                        <MudTextField>Create bundle offer for gaming accessories (predicted 15% conversion lift)</MudTextField>
+                    </MudListItem>
+                    <MudListItem>
+                        <MudIcon Icon="@Icons.Material.Filled.Star" Color="Color.Warning" />
+                        <MudTextField>Restock wireless earbuds - low inventory affecting sales</MudTextField>
+                    </MudListItem>
+                    <MudListItem>
+                        <MudIcon Icon="@Icons.Material.Filled.Star" Color="Color.Warning" />
+                        <MudTextField>Target customers in Northeast region with personalized offers</MudTextField>
+                    </MudListItem>
+                </MudList>
+            </div>
+        </DialogContent>
+        <DialogActions>
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="@(() => showAiDialog = false)">Close</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ApplyAiRecommendations">Apply Recommendations</MudButton>
+        </DialogActions>
+    </MudDialog>
+}
+
+@code {
+
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [CascadingParameter(Name = "IsDarkMode")]
+    private bool IsDarkMode { get; set; }
+
+    // DTO models
+    private OrdersAnalytics OrderAnalyticsData = new();
+    private OrderStatusCountsDto orderStatusCounts = new();
+    private CustomerAnalytics customerData = new();
+    private MetricsData metricsData = new();
+    private FulfillmentMetricsDto fulfillmentData = new();
+    private SecurityStatus securityStatus = new();
+    private AiInsightsData aiData = new();
+
+    // Lists
+    private List<TopProduct> topProducts = new();
+    private List<InventoryAlert> inventoryAlerts = new();
+    private List<TopCustomer> topCustomers = new();
+
+    // Chart data
+    private List<ChartSeries> chartSeriesData = new();
+    private string[] chartLabels = Array.Empty<string>();
+
+    private double[] acquisitionData = new double[] { 45, 25, 15, 10, 5 };
+    private string[] acquisitionLabels = new string[] { "Organic", "Direct", "Social", "Email", "Paid" };
+
+    private double[] customerTypeData;
+    private string[] customerTypeLabels = new string[] { "New Customers", "Returning" };
+
+    private double[] orderRegionData = new double[] { 30, 25, 20, 15, 10 };
+    private string[] orderRegionLabels = new string[] { "Northeast", "Midwest", "South", "West", "International" };
+
+    private ChartOptions revenueChartOptions = new ChartOptions
+    {
+        
+        YAxisLines = true,
+        XAxisLines = true,
+        YAxisTicks = 5,
+        ChartPalette = new string[] { Colors.Blue.Default, Colors.Teal.Default }
+    };
+
+    private AxisChartOptions _axisChartOptions = new AxisChartOptions
+    {
+        XAxisLabelRotation = 70,
+
+    };
+
+    private string selectedTimeframe = "30days";
+    private DateTime startDate = DateTime.UtcNow.AddDays(-30);
+    private DateTime endDate = DateTime.UtcNow;
+    private bool showAiDialog = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        //UpdateDateRange();
+        await LoadRevenueAndOrdersDataAsync();
+
+        await LoadOrderStatusCountsAsync();
+
+
+        customerData = await CustomerService.GetCustomerAnalyticsAsync(startDate,endDate);
+        var stats = await CustomerService.GetCustomerTypeStatsAsync();
+        customerTypeData = stats.ToArray();
+
+        metricsData = new MetricsData
+        {
+            ConversionRate = 3.8,
+            ConversionChange = 2.1,
+            AverageOrderValue = 295.75m,
+            AovChange = 5.2,
+            ReturnRate = 2.4,
+            ReturnChange = -0.7
+        };
+
+        fulfillmentData = await OrderService.GetFulfillmentMetricsAsync(startDate,endDate);
+        securityStatus = new SecurityStatus
+        {
+            IsSecure = true,
+            PciCompliant = true,
+            Encrypted = true
+        };
+
+        aiData = new AiInsightsData
+        {
+            PredictedRevenue = 14200.50m
+        };
+
+
+        topProducts = (await OrderService.GetTopProductsAsync(startDate, endDate, 5)).ToList();
+
+        inventoryAlerts = (await ProductService.GetInventoryAlertsAsync(10)).ToList();
+
+        topCustomers = (await OrderService.GetTopCustomersAsync()).ToList();
+
+        StateHasChanged();
+    }
+
+    private async Task LoadRevenueAndOrdersDataAsync()
+    {
+        try
+        {
+            OrderAnalyticsData = await OrderService.GetOrdersAnalyticsAsync(startDate, endDate);
+            //chartLabels = ReduceLabelsForDisplay( OrderAnalyticsData.RevenueAndOrdersSeries.Labels,maxLabels:10);
+            chartLabels = OrderAnalyticsData.RevenueAndOrdersSeries.Labels;
+            chartSeriesData = OrderAnalyticsData.RevenueAndOrdersSeries.Series
+                .Select(s => new ChartSeries { Name = s.Name, Data = s.Data })
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading OrderAnalytics: {ex.Message}", Severity.Error);
+        }
+
+    }
+
+    private async Task LoadOrderStatusCountsAsync()
+    {
+        try
+        {
+            orderStatusCounts =  await OrderService.GetOrderStatusCountsAsync();
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading OrderStatusCounts: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private string FormatCurrency(decimal value) => value.ToString("C", CultureInfo.CreateSpecificCulture("sw-KE"));
+
+    private async Task RefreshOrderData()
+    {
+        await LoadOrderStatusCountsAsync();
+        StateHasChanged();
+    }
+
+    private void ReorderProduct(int productId)
+    {
+        // In a real app, this would trigger a reorder process
+        var product = inventoryAlerts.FirstOrDefault(p => p.ProductId == productId);
+        if (product != null)
+        {
+            inventoryAlerts.Remove(product);
+        }
+    }
+
+    private void ShowAiInsights() => showAiDialog = true;
+
+    private void ApplyAiRecommendations()
+    {
+        // In a real app, this would apply the AI recommendations
+        showAiDialog = false;
+    }
+
+    private void UpdateDateRange()
+    {
+        switch (selectedTimeframe)
+        {
+            case "today":
+                startDate = DateTime.UtcNow.Date;
+                endDate = DateTime.UtcNow;
+                break;
+            case "7days":
+                startDate = DateTime.UtcNow.AddDays(-7).Date;
+                endDate = DateTime.UtcNow.Date.AddDays(1).AddTicks(-1);
+                break;
+            case "30days":
+                startDate = DateTime.UtcNow.AddDays(-30).Date;
+                endDate = DateTime.UtcNow.Date.AddDays(1).AddTicks(-1);
+                break;
+            case "365days":
+                startDate = DateTime.UtcNow.AddDays(-365).Date;
+                endDate = DateTime.UtcNow.Date.AddDays(1).AddTicks(-1);
+                break;
+        }
+    }
+
+    private async Task OnTimeframeChanged(string value)
+    {
+        selectedTimeframe = value;
+        UpdateDateRange();
+        await LoadRevenueAndOrdersDataAsync();
+        //await LoadRevenueChartAsync();
+    }
+
+    private string[] ReduceLabelsForDisplay(string[] labels, int maxLabels = 10)
+    {
+        if (labels == null) return Array.Empty<string>();
+        if (labels.Length <= maxLabels) return labels;
+
+        var step = (int)Math.Ceiling(labels.Length / (double)maxLabels);
+        var outLabels = new string[labels.Length];
+
+        for (int i = 0; i < labels.Length; i++)
+            outLabels[i] = (i % step == 0) ? labels[i] : "";
+
+        return outLabels;
+    }
+     
+}

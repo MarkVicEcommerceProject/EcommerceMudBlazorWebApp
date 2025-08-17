@@ -1,0 +1,40 @@
+<MudCard Style="">
+    <MudCardContent>
+        <div class="d-flex align-center mb-2 bg-">
+            <MudIcon Icon="@Icon" Class="mr-2" />
+            <MudText Typo="Typo.subtitle2">@Title</MudText>
+        </div>
+
+        <MudText Typo="Typo.h4" Class="mb-1">@Value</MudText>
+
+        <div class="d-flex align-center">
+            <MudIcon Icon="@TrendIcon" Color="@TrendColor" Class="mr-1" />
+            <MudText Typo="Typo.caption" Color="@TrendColor">
+                @(!string.IsNullOrWhiteSpace(TrendText) ? TrendText : "No data")
+            </MudText>
+        </div>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string TrendText { get; set; } = string.Empty;
+    [Parameter] public string Icon { get; set; } = string.Empty;
+    [Parameter] public string Background { get; set; } = "";
+
+    private bool IsPositive =>
+        !string.IsNullOrWhiteSpace(TrendText) && TrendText.TrimStart().StartsWith("+");
+    private bool IsNegative =>
+        !string.IsNullOrWhiteSpace(TrendText) && TrendText.TrimStart().StartsWith("-");
+
+    private string TrendIcon =>
+        IsPositive ? Icons.Material.Filled.ArrowUpward
+        : IsNegative ? Icons.Material.Filled.ArrowDownward
+        : Icons.Material.Filled.HorizontalRule;
+
+    private Color TrendColor =>
+        IsPositive ? Color.Success
+        : IsNegative ? Color.Error
+        : Color.Default;
+}

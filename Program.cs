@@ -1,6 +1,7 @@
 using ECommerceMudblazorWebApp.Components;
 using ECommerceMudblazorWebApp.Components.Account;
 using ECommerceMudblazorWebApp.Components.Admin.Services;
+using ECommerceMudblazorWebApp.Components.Admin.Services.Customers;
 using ECommerceMudblazorWebApp.Data;
 using ECommerceMudblazorWebApp.Services;
 using ECommerceMudblazorWebApp.Services.Orders;
@@ -53,6 +54,7 @@ builder.Services.AddScoped<ICategoryService,CategoryService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IOrderService, EfOrderService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddScoped<CartStateService>();
 

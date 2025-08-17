@@ -12,7 +12,8 @@
         <MudText Typo="Typo.h4" Class="my-2 font-inter md:text-center">Orders</MudText>
     </MudItem>
     <MudItem xs="12" md="6" Class="d-flex justify-md-end">
-        <MudSelect T="string" 
+        <MudSelect T="string"
+                Value="selectedDateRange"
                 ValueChanged="@(async range => {
                     selectedDateRange = range;
                     UpdateDateRange();
@@ -41,16 +42,16 @@
 
 <MudGrid Spacing="2" Class="mt-4">
     <MudItem xs="12" sm="6" md="3">
-        <SummaryCard Title="Total Orders" 
-                    Value="@totalOrders.ToString()" 
-                    Trend="@totalOrdersTrend"
-                    Icon="@Icons.Material.Filled.ReceiptLong" />
-    </MudItem>
-    <MudItem xs="12" sm="6" md="3">
         <SummaryCard Title="Total Revenue" 
                     Value="@($"{totalRevenue.ToString("N2")}")" 
                     Trend="@revenueTrend"
                     Icon="@Icons.Material.Filled.Payments" />
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <SummaryCard Title=@($"Total Orders Placed (last {selectedDateRange})") 
+                    Value="@totalOrders.ToString()" 
+                    Trend="@totalOrdersTrend"
+                    Icon="@Icons.Material.Filled.ReceiptLong" />
     </MudItem>
     <MudItem xs="12" sm="6" md="3">
         <SummaryCard Title="Fulfilled" 
@@ -121,7 +122,7 @@
                     <MudIconButton 
                         Icon="@Icons.Material.Filled.Visibility"
                         Color="Color.Primary"
-                        OnClick="@(e => ViewOrder(context.Id))" />
+                        OnClick="@(async e => await ViewOrderDialogAsync(context))" />
                 </MudTooltip>
 
                 <!-- Edit Button -->
@@ -151,13 +152,9 @@
 @code{
     private List<Order> allOrders = new();
     private IEnumerable<Order> filteredOrders => allOrders
-        .Where(o => (selectedStatus == "all" || o.Status.ToString() == selectedStatus)
-            && (o.OrderDate >= startDate && o.OrderDate <= endDate)
-            && (string.IsNullOrWhiteSpace(searchString)
-                || o.Id.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase)
-                || (o.User != null && o.User.Email.Contains(searchString, StringComparison.OrdinalIgnoreCase))))
-        .OrderByDescending(o => o.OrderDate)
-        .ToList();
+    .Where(o => StatusMatches(o) && DateMatches(o) && MatchesSearch(o))
+    .OrderByDescending(o => o.OrderDate)
+    .ToList();
 
     private string selectedStatus = "all";
     private string searchString = "";
@@ -210,48 +207,17 @@
     {
         try
         {
-            // Get current period data
-            var currentOrders = allOrders
-            .Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate)
-            .ToList();
+            var analytics = await OrderService.GetOrdersAnalyticsAsync(startDate, endDate);
 
-            totalOrders = currentOrders.Count;
-            totalRevenue = currentOrders.Sum(o => o.TotalAmount);
-            fulfilledOrders = currentOrders.Count(o => o.Status == OrderStatus.DELIVERED || o.Status == OrderStatus.SHIPPED);
-            pendingOrders = currentOrders.Count(o => o.Status == OrderStatus.PENDING || o.Status == OrderStatus.PROCESSING);
+            totalOrders = analytics.TotalOrders;
+            totalRevenue = analytics.TotalRevenue;
+            fulfilledOrders = analytics.FulfilledOrders;
+            pendingOrders = analytics.PendingOrders;
 
-            // Calculate previous period for trends
-            var s = startDate.Date;
-            var e = endDate.Date;
-
-            if (e < s)
-            {
-                (s, e) = (e, s);
-            }
-
-            int lengthInclusive = (e - s).Days + 1;
-
-            var previousEnd = s.AddDays(-1);
-            var previousStart = s.AddDays(-lengthInclusive);
-
-            var previousOrders = allOrders
-            .Where(o => o.OrderDate >= previousStart && o.OrderDate <= previousEnd)
-            .ToList();
-
-            totalOrdersTrend = CalculateTrend(currentOrders.Count, previousOrders.Count);
-            revenueTrend = CalculateTrend(
-            currentOrders.Sum(o => o.TotalAmount),
-            previousOrders.Sum(o => o.TotalAmount),
-            true
-            );
-            fulfilledTrend = CalculateTrend(
-            currentOrders.Count(o => o.Status == OrderStatus.DELIVERED || o.Status == OrderStatus.SHIPPED),
-            previousOrders.Count(o => o.Status == OrderStatus.DELIVERED || o.Status == OrderStatus.SHIPPED)
-            );
-            pendingTrend = CalculateTrend(
-            currentOrders.Count(o => o.Status == OrderStatus.PENDING || o.Status == OrderStatus.PROCESSING),
-            previousOrders.Count(o => o.Status == OrderStatus.PENDING || o.Status == OrderStatus.PROCESSING)
-            );
+            totalOrdersTrend = analytics.TotalOrdersTrend;
+            revenueTrend = analytics.RevenueTrend;
+            fulfilledTrend = analytics.FulfilledTrend;
+            pendingTrend = analytics.PendingTrend;
         }
         catch (Exception ex)
         {
@@ -259,28 +225,39 @@
         }
     }
 
-    private string CalculateTrend(decimal current, decimal previous, bool isCurrency = false)
+
+    private bool StatusMatches(Order o)
     {
-        if (previous == 0)
-        {
-            if (current == 0) return "No change vs previous period";
-            return isCurrency ? $"+{current:N2} Ksh vs previous period (no prior data)" : $"+{Math.Round(current,1)} vs previous period (no prior data)";
-        }
+        if (selectedStatus == "all") return true;
+        return o.Status.ToString() == selectedStatus;
+    }
 
-        var changePercent = ((current - previous) / previous) * 100m;
-        var sign = changePercent >= 0 ? "+" : "-";
-        var pct = Math.Round(Math.Abs(changePercent), 1).ToString() + "%";
+    private bool DateMatches(Order o)
+    {
+        var orderDateUtc = o.OrderDate.ToUniversalTime();
+        var deliveredDateUtc = o.DeliveredDate > DateTime.MinValue ? o.DeliveredDate.ToUniversalTime() : (DateTime?)null;
 
-        if (isCurrency)
-        {
-            var diff = current - previous;
-            var diffFormatted = diff >= 0 ? $"+{diff:N2} ksh" :$"{diff.ToString("N2")} Ksh";
-            return $"{sign}{pct} ({diffFormatted}) vs previous period";
-        }
-        else
-        {
-            return $"{sign}{pct} vs previous period";
-        }
+        var rangeStartUtc = startDate.ToUniversalTime();
+        var rangeEndUtc = endDate.ToUniversalTime();
+
+        bool inOrderRange = orderDateUtc >= rangeStartUtc && orderDateUtc <= rangeEndUtc;
+        bool inDeliveredRange = deliveredDateUtc.HasValue && deliveredDateUtc.Value >= rangeStartUtc && deliveredDateUtc.Value <= rangeEndUtc;
+
+        if (selectedStatus == OrderStatus.DELIVERED.ToString())
+            return inDeliveredRange;
+
+        if (selectedStatus == "all")
+            return inOrderRange || inDeliveredRange;
+
+        // For other statuses (PENDING, PROCESSING, etc.) use OrderDate to determine inclusion
+        return inOrderRange;
+    }
+
+    private bool MatchesSearch(Order o)
+    {
+        if (string.IsNullOrWhiteSpace(searchString)) return true;
+        return o.Id.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase)
+            || (o.User != null && o.User.Email.Contains(searchString, StringComparison.OrdinalIgnoreCase));
     }
 
 
@@ -302,9 +279,16 @@
         NavigationManager.NavigateTo("/admin/orders/new");
     }
 
-    private void ViewOrder(int orderId)
+    private async Task ViewOrderDialogAsync(Order order)
     {
-        NavigationManager.NavigateTo($"/admin/orders/{orderId}");
+        var parameters = new DialogParameters { ["Order"] = order };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium };
+        var dialogReference = await DialogService.ShowAsync<OrderDetailsDialog>("View order", parameters, options);
+        var result = await dialogReference.Result;
+        if (!result.Canceled && result.Data is bool openEdit && openEdit)
+        {
+            EditOrder(order.Id);
+        }
     }
 
     private void EditOrder(int orderId)

@@ -11,5 +11,7 @@ namespace ECommerceMudblazorWebApp.Components.Admin.Services
         Task DeleteProductAsync(int id);
         Task<string> GenerateSKUAsync(string Category, string Name);
         //Task<bool> IsSKUUniqueAsync(string sku);
+
+        Task<IEnumerable<InventoryAlert>> GetInventoryAlertsAsync(int threshold = 5);
     }
 }
