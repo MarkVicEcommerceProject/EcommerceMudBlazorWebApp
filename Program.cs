@@ -2,6 +2,8 @@ using ECommerceMudblazorWebApp.Components;
 using ECommerceMudblazorWebApp.Components.Account;
 using ECommerceMudblazorWebApp.Components.Admin.Services;
 using ECommerceMudblazorWebApp.Components.Admin.Services.Customers;
+using ECommerceMudblazorWebApp.Services.Recommendations;
+using ECommerceMudblazorWebApp.Services.Tags;
 using ECommerceMudblazorWebApp.Data;
 using ECommerceMudblazorWebApp.Services;
 using ECommerceMudblazorWebApp.Services.Orders;
@@ -10,6 +12,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,8 +58,12 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICartService, CartService>();
 builder.Services.AddScoped<IOrderService, EfOrderService>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IRecommendationService, RecommendationService>();
+builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddScoped<CartStateService>();
+
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
@@ -84,7 +91,6 @@ app.MapRazorComponents<App>()
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
 
-//Minimal Api for Paypal Integration
 app.MapPaypalEndpoints();
 
 app.Run();

@@ -1,65 +1,103 @@
 @page "/admin/products/edit/{id:int}"
 @using ECommerceMudblazorWebApp.Components.Admin.Services
+@using ECommerceMudblazorWebApp.Services.Tags
 @using ECommerceMudblazorWebApp.Models
 @inject IProductService ProductService
 @inject ICategoryService CategoryService
+@inject ITagService TagService
 @inject NavigationManager NavigationManager
 @inject ISnackbar Snackbar
 
 <PageTitle>Edit Product</PageTitle>
 
-@if(product==null || categories.Count == 0)
+@if(product == null || categories.Count == 0)
 {
-<MudProgressCircular Indeterminate="true" />
+    <MudProgressCircular Indeterminate="true" />
 }
 else
 {
-    <MudPaper Class="p-4 mx-auto mt-6" Style="max-width: 700px;">
-    <MudText Typo="Typo.h5" Class="mb-4">Edit Product</MudText>
+    <MudPaper Class="pa-4 mx-auto mt-6" Style="max-width: 900px;">
+        <MudText Typo="Typo.h5" Class="mb-4">Edit Product</MudText>
 
-    <EditForm Model="inputModel" OnValidSubmit="HandleValidSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+        <EditForm Model="inputModel" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
 
-        <MudTextField Label="Product Name" @bind-Value="inputModel.Name" Required="true" />
-        <MudNumericField T="decimal" Label="Price" @bind-Value="inputModel.Price" Required="true" Adornment="Adornment.Start" AdornmentText="KES" />
-        <MudTextField Label="Description" @bind-Value="inputModel.Description" Required="true" Lines="3" />
-        <MudNumericField T="int" Label="Stock Quantity" @bind-Value="inputModel.StockQuantity" Required="true" />
-        
-        <MudSelect T="int" 
-                Label="Select Categories" 
-                MultiSelection="true" 
-                @bind-SelectedValues="inputModel.SelectedCategoryIds"
-                ToStringFunc="@(id => categories?.FirstOrDefault(c => c.Id == id)?.Name ?? string.Empty)"> 
-            @if (categories != null)
+            <MudTextField Label="Product Name" @bind-Value="inputModel.Name" Required="true" />
+            <MudNumericField T="decimal" Label="Price" @bind-Value="inputModel.Price" Required="true" Adornment="Adornment.Start" AdornmentText="KES" />
+            <MudTextField Label="Description" @bind-Value="inputModel.Description" Required="true" Lines="3" />
+            <MudNumericField T="int" Label="Stock Quantity" @bind-Value="inputModel.StockQuantity" Required="true" />
+
+            <MudCheckBox @bind-Value="inputModel.IsActive" Label="Is Active?" />
+            <MudCheckBox @bind-Value="inputModel.IsFeatured" Label="Featured?" Class="ml-4" />
+            @if (inputModel.IsFeatured)
             {
+                <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <MudDatePicker Label="Featured Start" @bind-Date="inputModel.FeaturedStart" />
+                    <MudDatePicker Label="Featured End" @bind-Date="inputModel.FeaturedEnd" />
+                </div>
+            }
+
+            <MudCheckBox @bind-Value="inputModel.IsDailyDeal" Label="Daily Deal?" Class="ml-4" />
+            @if (inputModel.IsDailyDeal)
+            {
+                <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <MudNumericField T="decimal?" Label="Daily Deal Price" @bind-Value="inputModel.DailyDealPrice" />
+                    <MudDatePicker Label="Daily Deal Date (optional)" @bind-Date="inputModel.DailyDealDate" />
+                </div>
+            }
+
+            <MudCheckBox @bind-Value="inputModel.IsFlashSale" Label="Part of Flash Sale?" Class="ml-4" />
+            @if (inputModel.IsFlashSale)
+            {
+                <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <MudNumericField T="decimal?" Label="Flash Sale Price" @bind-Value="inputModel.FlashSalePrice" />
+                    <MudDatePicker Label="Flash Sale Start (date)" @bind-Date="inputModel.FlashSaleStart" />
+                    <MudDatePicker Label="Flash Sale End (date)" @bind-Date="inputModel.FlashSaleEnd" />
+                </div>
+            }
+
+            <MudSelect T="int"
+                       Label="Select Categories"
+                       MultiSelection="true"
+                       @bind-SelectedValues="inputModel.SelectedCategoryIds"
+                       ToStringFunc="@(id => categories?.FirstOrDefault(c => c.Id == id)?.Name ?? string.Empty)">
                 @foreach (var category in categories)
                 {
                     <MudSelectItem T="int" Value="@category.Id">@category.Name</MudSelectItem>
                 }
-            }
-        </MudSelect>
-        
-        <MudTextField Label="Image Path" @bind-Value="inputModel.ImagePath" />
-        
-        <!-- Optionally upload a new image -->
-        <MudFileUpload T="IBrowserFile"
-                    @ref="_fileUpload"
-                    Accept=".png,.jpg,.jpeg"
-                    @bind-Files="inputModel.File"
-                    MaxFileSize="5242880"
-                    OnFilesChanged="OnFilesChanged">
-            <ActivatorContent>
-                <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.UploadFile">Upload Image</MudButton>
-            </ActivatorContent>
-        </MudFileUpload>
+            </MudSelect>
 
-        <MudStaticButton FormAction="FormAction.Submit" Color="Color.Success" Variant="Variant.Filled" Class="mt-4">
-            Update Product
-        </MudStaticButton>
-        <MudButton Href="/admin/products" Color="Color.Secondary" Variant="Variant.Text" Class="mt-4 ml-2">Cancel</MudButton>
-    </EditForm>
-</MudPaper>
+            <MudSelect T="int"
+                       Label="Select Tags"
+                       MultiSelection="true"
+                       @bind-SelectedValues="inputModel.SelectedTagsIds"
+                       ToStringFunc="@(id => tags?.FirstOrDefault(t => t.Id == id)?.Name ?? string.Empty)">
+                @foreach (var tag in tags)
+                {
+                    <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudTextField Label="Image Path" @bind-Value="inputModel.ImagePath" />
+
+            <MudFileUpload T="IBrowserFile"
+                           @ref="_fileUpload"
+                           Accept=".png,.jpg,.jpeg"
+                           @bind-Files="inputModel.File"
+                           MaxFileSize="5242880"
+                           OnFilesChanged="OnFilesChanged">
+                <ActivatorContent>
+                    <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.UploadFile">Upload Image</MudButton>
+                </ActivatorContent>
+            </MudFileUpload>
+
+            <div class="mt-4">
+                <MudStaticButton FormAction="FormAction.Submit" Color="Color.Success" Variant="Variant.Filled">Update Product</MudStaticButton>
+                <MudButton Href="/admin/products" Color="Color.Secondary" Variant="Variant.Text" Class="ml-2">Cancel</MudButton>
+            </div>
+        </EditForm>
+    </MudPaper>
 }
 
 @code {
@@ -67,6 +105,7 @@ else
     private InputModel inputModel { get; set; } = new();
     private Product product;
     private List<Category> categories = new();
+    private List<Tag> tags = new();
     private MudFileUpload<IBrowserFile> _fileUpload;
     private IBrowserFile _selectedFile;
     private const long maxFileSize = 5 * 1024 * 1024;
@@ -78,6 +117,7 @@ else
         errorMessage = string.Empty;
         product = await ProductService.GetProductByIdAsync(Id);
         categories = (await CategoryService.GetAllAsync()).ToList();
+        tags = (await TagService.GetAllTagsAsync()).ToList();
 
         if (product == null || categories.Count == 0)
         {
@@ -93,12 +133,23 @@ else
             Description = product.Description,
             StockQuantity = product.StockQuantity,
             ImagePath = product.ImagePath,
-            SelectedCategoryIds = product.ProductCategories != null
-                ? new HashSet<int>(product.ProductCategories.Select(c => c.CategoryId))
-                : new HashSet<int>(),
+            SelectedCategoryIds = product.ProductCategories != null ? new HashSet<int>(product.ProductCategories.Select(c => c.CategoryId)) : new HashSet<int>(),
+            SelectedTagsIds = product.ProductTags != null ? new HashSet<int>(product.ProductTags.Select(t => t.TagId)) : new HashSet<int>(),
+            File = null,
 
-            File = null
+            // denormalized flags
+            IsActive = product.IsActive,
+            IsFeatured = product.IsFeatured,
+            IsDailyDeal = product.IsDailyDeal,
+            DailyDealPrice = product.DailyDealPrice,
+            IsFlashSale = product.IsFlashSale,
+            FlashSalePrice = product.FlashSalePrice,
+            FlashSaleStart = product.FlashSaleStart,
+            FlashSaleEnd = product.FlashSaleEnd
         };
+
+        // If you want to load exact featured start/end stored in FeaturedProduct, you can call RecommendationService here to fetch it.
+        // If you want to load the active DailyDeal row or FeaturedProduct row to show exact start/end, add those service calls here.
 
         oldImagePath = product.ImagePath;
     }
@@ -128,6 +179,9 @@ else
         product.Price = inputModel.Price;
         product.Description = inputModel.Description;
         product.StockQuantity = inputModel.StockQuantity;
+        product.ImagePath = inputModel.ImagePath;
+        product.ImageUrl = inputModel.ImagePath;
+        product.IsActive = inputModel.IsActive;
 
         if (_selectedFile != null)
         {
@@ -135,30 +189,25 @@ else
             {
                 var ext = Path.GetExtension(_selectedFile.Name).ToLowerInvariant();
                 var fileName = $"{Guid.NewGuid()}{ext}";
-
                 var uploadFolder = Path.Combine("wwwroot", "images", "uploads");
-                if (!Directory.Exists(uploadFolder))
-                    Directory.CreateDirectory(uploadFolder);
-
+                if (!Directory.Exists(uploadFolder)) Directory.CreateDirectory(uploadFolder);
                 var savePath = Path.Combine(uploadFolder, fileName);
 
-                // Delete old file
                 if (!string.IsNullOrWhiteSpace(oldImagePath))
                 {
                     var fullOldPath = Path.Combine("wwwroot", oldImagePath.TrimStart('/'));
-                    if (System.IO.File.Exists(fullOldPath))
-                        System.IO.File.Delete(fullOldPath);
+                    if (System.IO.File.Exists(fullOldPath)) System.IO.File.Delete(fullOldPath);
                 }
 
                 using var stream = new FileStream(savePath, FileMode.Create);
                 await _selectedFile.OpenReadStream(maxFileSize).CopyToAsync(stream);
-
                 product.ImagePath = $"/images/uploads/{fileName}";
             }
             catch (Exception ex)
             {
                 errorMessage = "Image saving failed.";
                 Console.WriteLine($"Image upload error: {ex.Message}");
+                Snackbar.Add(errorMessage, Severity.Error);
                 return;
             }
         }
@@ -169,25 +218,65 @@ else
 
         try
         {
-            await ProductService.UpdateProductAsync(product, inputModel.SelectedCategoryIds);
-            Snackbar.Add("Product updated successfully!", Severity.Success);
-            NavigationManager.NavigateTo("/admin/products");
+            var ok = await ProductService.UpdateProductAsync(
+                product,
+                inputModel.SelectedCategoryIds,
+                inputModel.SelectedTagsIds,
+                setFeatured: inputModel.IsFeatured,
+                featuredStart: inputModel.FeaturedStart,
+                featuredEnd: inputModel.FeaturedEnd,
+                setDailyDeal: inputModel.IsDailyDeal,
+                dailyDealPrice: inputModel.DailyDealPrice,
+                dailyDealStart: inputModel.DailyDealDate,
+                dailyDealEnd: null,
+                setFlashSale: inputModel.IsFlashSale,
+                flashSalePrice: inputModel.FlashSalePrice,
+                flashSaleStart: inputModel.FlashSaleStart,
+                flashSaleEnd: inputModel.FlashSaleEnd
+            );
+
+            if (ok)
+            {
+                Snackbar.Add("Product updated successfully!", Severity.Success);
+                StateHasChanged();
+                NavigationManager.NavigateTo("/admin/products");
+            }
+            else
+            {
+                Snackbar.Add("Product update failed.", Severity.Error);
+            }
         }
         catch (Exception ex)
         {
             errorMessage = "Update failed.";
             Console.WriteLine($"Update error: {ex.Message}");
+            Snackbar.Add(errorMessage, Severity.Error);
         }
     }
 
-
-    private sealed class InputModel{
+    private sealed class InputModel
+    {
         public string Name { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public string Description { get; set; } = string.Empty;
         public int StockQuantity { get; set; }
         public string ImagePath { get; set; } = string.Empty;
         public IEnumerable<int> SelectedCategoryIds { get; set; } = new HashSet<int>();
+        public IEnumerable<int> SelectedTagsIds { get; set; } = new HashSet<int>();
         public IBrowserFile? File { get; set; }
+
+        public bool IsActive { get; set; } = true;
+        public bool IsFeatured { get; set; } = false;
+        public DateTime? FeaturedStart { get; set; }
+        public DateTime? FeaturedEnd { get; set; }
+
+        public bool IsDailyDeal { get; set; } = false;
+        public decimal? DailyDealPrice { get; set; }
+        public DateTime? DailyDealDate { get; set; }
+
+        public bool IsFlashSale { get; set; } = false;
+        public decimal? FlashSalePrice { get; set; }
+        public DateTime? FlashSaleStart { get; set; }
+        public DateTime? FlashSaleEnd { get; set; }
     }
 }

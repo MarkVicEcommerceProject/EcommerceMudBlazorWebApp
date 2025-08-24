@@ -1,10 +1,13 @@
 ﻿@page "/admin/products/create"
 @using ECommerceMudblazorWebApp.Components.Admin.Services
+@using ECommerceMudblazorWebApp.Services.Recommendations
+@using ECommerceMudblazorWebApp.Services.Tags
 @using ECommerceMudblazorWebApp.Models
 @using System.ComponentModel.DataAnnotations
-
 @inject IProductService ProductService
+@inject IRecommendationService RecommendationService
 @inject ICategoryService CategoryService
+@inject ITagService TagService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Create Product</PageTitle>
@@ -14,7 +17,7 @@
         Back to Products
     </MudLink>
 
-    <MudContainer MaxWidth="MaxWidth.Large" Class="font-inter mt-4 rounded-lg p-6 shadow-md">
+    <MudContainer MaxWidth="MaxWidth.Large" Class="font-inter mt-4 rounded-lg pa-6 shadow-md">
         <MudText Typo="Typo.h4" Class="mb-4 font-bold">Create New Product</MudText>
 
         @if (!string.IsNullOrWhiteSpace(errorMessage))
@@ -28,52 +31,146 @@
             <DataAnnotationsValidator />
             <ValidationSummary />
 
-            <MudTextField T="string" Label="Product Name" @bind-Value="Input.Name" For="@(() => Input.Name)" Required="true" />
-            <MudNumericField T="decimal" Label="Price" @bind-Value="Input.Price" For="@(() => Input.Price)" Required="true"
-                            Adornment="Adornment.Start" AdornmentText="KES" />
-            <MudTextField T="string" Label="Description" @bind-Value="Input.Description" For="@(() => Input.Description)" Lines="4" />
-            <MudNumericField T="int" Label="Stock Quantity" @bind-Value="Input.StockQuantity" For="@(() => Input.StockQuantity)" Required="true" />
-            <MudSelect T="int" Label="Select Categories" MultiSelection="true" @bind-SelectedValues="Input.SelectedCategoryIds"
-                ToStringFunc="@(id => allCategories.FirstOrDefault(c => c.Id == id)?.Name)">
-                @foreach (var category in allCategories)
-                {
-                    <MudSelectItem T="int" Value="@category.Id">@category.Name</MudSelectItem>
-                }
-            </MudSelect>
+            <MudGrid>
+                <MudItem xs="12" md="8">
+                    <MudTextField T="string" Label="Product Name" @bind-Value="Input.Name" For="@(() => Input.Name)" Required="true" />
+                    <MudTextField T="string" Label="SKU (optional)" @bind-Value="Input.SKU" For="@(() => Input.SKU)" Class="mt-2" />
 
-            @if(Input.SelectedCategoryIds.Count() > 0){
-                <MudChipSet T="int" SelectionMode="SelectionMode.MultiSelection" CheckMark="true">
-                    @foreach(var id in Input.SelectedCategoryIds){
-                        var cat = allCategories.FirstOrDefault(c => c.Id == id);
-                        if(cat != null){
-                            <MudChip Color="Color.Primary" Closeable="true" OnClose="@((MudChip<int> chip) => RemoveCategory(id) )">
-                                @cat.Name
-                            </MudChip>
-                            Console.WriteLine(id);
+                    <MudNumericField T="decimal" Label="Price" @bind-Value="Input.Price" For="@(() => Input.Price)" Required="true"
+                                    Adornment="Adornment.Start" AdornmentText="KES" Class="mt-2" />
+
+                    <MudTextField T="string" Label="Description" @bind-Value="Input.Description" For="@(() => Input.Description)" Lines="4" Class="mt-2" />
+
+                    <MudNumericField T="int" Label="Stock Quantity" @bind-Value="Input.StockQuantity" For="@(() => Input.StockQuantity)" Required="true" Class="mt-2" />
+                    
+                    <MudSelect T="int" Label="Select Categories" MultiSelection="true" @bind-SelectedValues="Input.SelectedCategoryIds"
+                        ToStringFunc="@(id => allCategories.FirstOrDefault(c => c.Id == id)?.Name)" Class="mt-2">
+                        @foreach (var category in allCategories)
+                        {
+                            <MudSelectItem T="int" Value="@category.Id">@category.Name</MudSelectItem>
                         }
-                    }
-                </MudChipSet>
-            }
+                    </MudSelect>
 
-            <div class="flex justify-between items-center gap-x-3 mt-3">
-                <MudStaticTextField T="string" Label="Image Path" @bind-Value="Input.ImagePath" For="@(() => Input.ImagePath)" />
-                <MudText>or</MudText>
-                <MudFileUpload @ref="_fileUpload"
-                            T="IBrowserFile"
-                            Accept=".png, .jpg, .jpeg, .gif"
-                            OnFilesChanged="UploadFiles"
-                            For="@(() => Input.File)"
-                            @bind-Files="Input.File">
-                    <ActivatorContent>
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload">
-                            Upload Files
-                        </MudButton>
-                    </ActivatorContent>
-                    <SelectedTemplate Context="fileContext">
-                        <MudText>@(fileContext?.Name ?? "No file selected")</MudText>
-                    </SelectedTemplate>
-                </MudFileUpload>
-            </div>
+                    @if (Input.SelectedCategoryIds?.Any() ?? false)
+                    {
+                        <MudChipSet T="int" SelectionMode="SelectionMode.MultiSelection" CheckMark="true" Class="mt-2">
+                            @foreach (var id in Input.SelectedCategoryIds)
+                            {
+                                var cat = allCategories.FirstOrDefault(c => c.Id == id);
+                                if (cat != null)
+                                {
+                                    <MudChip Color="Color.Primary"  OnClose="@((MudChip<int> chip) => RemoveCategory(id))">
+                                        @cat.Name
+                                    </MudChip>
+                                }
+                            }
+                        </MudChipSet>
+                    }
+
+                    <MudSelect T="int" Label="Select Tags" MultiSelection="true" @bind-SelectedValues="Input.SelectedTagsIds"
+                               ToStringFunc="@(id => allTags.FirstOrDefault(t => t.Id == id)?.Name)">
+                        @foreach (var tag in allTags)
+                        {
+                            <MudSelectItem T="int" Value="@tag.Id">@tag.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    @if (Input.SelectedTagsIds?.Any() ?? false)
+                    {
+                        <MudChipSet T="int" SelectionMode="SelectionMode.MultiSelection" CheckMark="true" Class="mt-2">
+                            @foreach (var id in Input.SelectedTagsIds)
+                            {
+                                var tag = allTags.FirstOrDefault(t => t.Id == id);
+                                if (tag != null)
+                                {
+                                    <MudChip Color="Color.Primary" Closeable="true" OnClose="@((MudChip<int> chip) => RemoveTag(id))">
+                                        @tag.Name
+                                    </MudChip>
+                                }
+                            }
+                        </MudChipSet>
+                    }
+
+                    <!-- Inline create new tag -->
+                    <div class="mt-2 flex items-center gap-2">
+                        <MudTextField T="string" Label="New Tag (create)" @bind-Value="newTagName" />
+                        <MudButton Variant="Variant.Filled" OnClick="CreateTagInline">Create Tag</MudButton>
+                    </div>
+
+                    <MudDivider Class="my-4" />
+
+                    <MudCheckBox @bind-Value="Input.IsActive" Label="Is Active" />
+                    <MudCheckBox @bind-Value="Input.IsFeatured" Label="Mark as Featured (will create featured list entry if backend supports it)" Class="ml-4" />
+                    <MudCheckBox @bind-Value="Input.IsDailyDeal" Label="Mark as Daily Deal" Class="ml-4" />
+                    @if (Input.IsDailyDeal)
+                    {
+                        <div class="mt-2">
+                            <MudNumericField T="decimal?" Label="Daily Deal Price" @bind-Value="Input.DailyDealPrice" />
+                        </div>
+                    }
+
+                    <MudDivider Class="my-4" />
+
+                    <MudCheckBox @bind-Value="Input.IsFlashSale" Label="Part of Flash Sale?" />
+                    @if (Input.IsFlashSale)
+                    {
+                        <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <MudNumericField T="decimal?" Label="Flash Sale Price" @bind-Value="Input.FlashSalePrice" />
+                            <MudDatePicker Label="Flash Sale Start (date)" @bind-Date="Input.FlashSaleStart" />
+                            <MudDatePicker Label="Flash Sale End (date)" @bind-Date="Input.FlashSaleEnd" />
+                            <MudText Typo="Typo.caption" Class="mt-2">* Time-of-day can be set later in the Flash Sale campaign UI.</MudText>
+                        </div>
+                    }
+
+                    <div class="flex justify-between items-center gap-x-3 mt-3">
+                        <MudStaticTextField T="string" Label="Image Path" @bind-Value="Input.ImagePath" For="@(() => Input.ImagePath)" />
+                        <MudText>or</MudText>
+                        <MudFileUpload @ref="_fileUpload"
+                                    T="IBrowserFile"
+                                    Accept=".png, .jpg, .jpeg, .gif"
+                                    OnFilesChanged="UploadFiles"
+                                    For="@(() => Input.File)"
+                                    @bind-Files="Input.File">
+                            <ActivatorContent>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload">
+                                    Upload Files
+                                </MudButton>
+                            </ActivatorContent>
+                            <SelectedTemplate Context="fileContext">
+                                <MudText>@(fileContext?.Name ?? "No file selected")</MudText>
+                            </SelectedTemplate>
+                        </MudFileUpload>
+                    </div>
+                </MudItem>
+
+                <MudItem xs="12" md="4">
+                    <MudPaper Class="pa-4 shadow-sm">
+                        <MudText Typo="Typo.subtitle1" Class="mb-2">Quick Preview</MudText>
+                        <MudList T="string" Dense="true">
+                            <MudListItem>
+                                <MudAvatar Size="Size.Medium">
+                                    <MudImage Src="@(Input.ImagePath)"></MudImage>
+                                </MudAvatar>
+                                <div class="ml-2">
+                                    <div class="font-semibold">@Input.Name</div>
+                                    <div class="mud-text-caption">Price: Ksh. @(Input.Price.ToString("N2"))</div>
+                                    <div class="mud-text-caption">SKU: @Input.SKU</div>
+                                </div>
+                            </MudListItem>
+                        </MudList>
+
+                        <MudDivider Class="my-2" />
+
+                        <MudText Typo="Typo.subtitle2" Class="mb-1">Flags</MudText>
+                        <MudChipSet T="string">
+                            @if (Input.IsActive) { <MudChip Color="Color.Success">Active</MudChip> }
+                            @if (Input.IsFeatured) { <MudChip Color="Color.Warning">Featured</MudChip> }
+                            @if (Input.IsFlashSale) { <MudChip Color="Color.Error">Flash Sale</MudChip> }
+                            @if (Input.IsDailyDeal) { <MudChip Color="Color.Info">Daily Deal</MudChip> }
+                        </MudChipSet>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
 
             <MudStaticButton FormAction="FormAction.Submit"
                             Color="Color.Primary"
@@ -103,11 +200,15 @@
     private string errorMessage = string.Empty;
     private const long maxFileSize = 5 * 1024 * 1024;
     private List<Category> allCategories = new();
+    private List<Tag> allTags = new();
+    private string newTagName = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
-        allCategories = (await CategoryService.GetAllAsync()).ToList(); 
+        allCategories = (await CategoryService.GetAllAsync()).ToList();
+        allTags = (await TagService.GetAllTagsAsync()).ToList();
     }
+
     private async Task HandleValidSubmit()
     {
         errorMessage = string.Empty;
@@ -149,15 +250,54 @@
             StockQuantity = Input.StockQuantity,
             ImagePath = Input.ImagePath,
             ImageUrl = Input.ImagePath,
-            ProductCategories = Input.SelectedCategoryIds.Select(id => new ProductCategory
-            {
-                CategoryId = id
-            }).ToList()
+            IsActive = Input.IsActive,
+            IsFeatured = Input.IsFeatured,
+            IsFlashSale = Input.IsFlashSale,
+            FlashSalePrice = Input.FlashSalePrice,
+            FlashSaleStart = Input.FlashSaleStart,
+            FlashSaleEnd = Input.FlashSaleEnd,
+            ProductCategories = Input.SelectedCategoryIds.Select(id => new ProductCategory { CategoryId = id }).ToList(),
+            ProductTags = Input.SelectedTagsIds.Select(id => new ProductTag { TagId = id }).ToList()
+
         };
 
         try
         {
             await ProductService.CreateProductAsync(newProduct);
+
+            if (Input.IsFeatured) await RecommendationService.SetProductFeaturedAsync(newProduct.Id, true, startDate: Input.FeaturedStart, endDate: Input.FeaturedEnd);
+            if (Input.IsFlashSale && Input.FlashSalePrice.HasValue)
+            {
+                // If admin set custom dates on the form, pass them through so the service creates/reuses a custom FlashSale
+                if (Input.FlashSaleStart.HasValue && Input.FlashSaleEnd.HasValue)
+                {
+                    await RecommendationService.AddOrUpdateFlashSaleItemAsync(
+                        null,
+                        newProduct.Id,
+                        Input.FlashSalePrice.Value,
+                        priority: 0,
+                        saleStart: Input.FlashSaleStart,
+                        saleEnd: Input.FlashSaleEnd,
+                        saleName: Input.FlashSaleName
+                    );
+                }
+                else
+                {
+                    // no custom dates -> fall back to active/today logic
+                    await RecommendationService.AddOrUpdateFlashSaleItemAsync(null, newProduct.Id, Input.FlashSalePrice.Value, priority: 0);
+                }
+            }
+            if (Input.IsDailyDeal && Input.DailyDealPrice.HasValue)
+            {
+                await RecommendationService.SetProductAsDailyDealAsync(
+                    newProduct.Id,
+                    Input.DailyDealPrice,
+                    date: DateTime.UtcNow.Date,
+                    priority: 0         
+                );
+            }
+
+
             NavigationManager.NavigateTo("/admin/products");
         }
         catch (Exception ex)
@@ -169,6 +309,7 @@
             isSubmitting = false;
         }
     }
+
 
     private void UploadFiles(InputFileChangeEventArgs e)
     {
@@ -192,20 +333,56 @@
         errorMessage = string.Empty;
     }
 
-    private void RemoveCategory(int id)
-    {      
-        var updated = Input.SelectedCategoryIds.ToHashSet();
-        if(updated.Remove(id)){
-            Input.SelectedCategoryIds = updated;
+    private async Task CreateTagInline()
+    {
+        var name = (newTagName ?? string.Empty).Trim();
+        if (string.IsNullOrEmpty(name)) return;
+
+        var exists = allTags.FirstOrDefault(t => t.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        if (exists != null)
+        {
+            // ensure it's selected
+            var set = Input.SelectedTagsIds?.ToHashSet() ?? new HashSet<int>();
+            set.Add(exists.Id);
+            Input.SelectedTagsIds = set;
+            newTagName = string.Empty;
+            return;
         }
-        
+
+        var tag = new Tag { Name = name };
+        var created = await TagService.CreateTagAsync(tag);
+        allTags.Add(created);
+
+        var selected = Input.SelectedTagsIds?.ToHashSet() ?? new HashSet<int>();
+        selected.Add(created.Id);
+        Input.SelectedTagsIds = selected;
+        newTagName = string.Empty;
     }
 
+    private void RemoveCategory(int id)
+    {
+        var updated = Input.SelectedCategoryIds.ToHashSet();
+        if (updated.Remove(id))
+        {
+            Input.SelectedCategoryIds = updated;
+        }
+    }
+
+    private void RemoveTag(int id)
+    {
+        var updated = Input.SelectedTagsIds.ToHashSet();
+        if (updated.Remove(id))
+        {
+            Input.SelectedTagsIds = updated;
+        }
+    }
 
     private sealed class InputModel
     {
         [Required(ErrorMessage = "Product name is required.")]
         public string Name { get; set; } = string.Empty;
+
+        public string SKU { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Price is required.")]
         [Range(0.01, double.MaxValue, ErrorMessage = "Price must be greater than zero.")]
@@ -215,7 +392,7 @@
         public string Description { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Stock quantity is required.")]
-        [Range(1, int.MaxValue, ErrorMessage = "Stock quantity must be at least 1.")]
+        [Range(0, int.MaxValue, ErrorMessage = "Stock quantity must be at least 0.")]
         public int StockQuantity { get; set; }
 
         public string ImagePath { get; set; } = string.Empty;
@@ -224,5 +401,22 @@
 
         [Required(ErrorMessage = "Select At least 1 Category")]
         public IEnumerable<int> SelectedCategoryIds { get; set; } = new HashSet<int>();
+
+        public IEnumerable<int> SelectedTagsIds { get; set; } = new HashSet<int>();
+
+        // NEW fields
+        public bool IsActive { get; set; } = true;
+        public bool IsFeatured { get; set; } = false;
+        public bool IsFlashSale { get; set; } = false;
+        public string? FlashSaleName { get; set; }
+        public decimal? FlashSalePrice { get; set; }
+        public DateTime? FlashSaleStart { get; set; }
+        public DateTime? FlashSaleEnd { get; set; }
+        public bool IsDailyDeal { get; set; } = false;
+        public decimal? DailyDealPrice { get; set; }
+
+        //optional
+        public DateTime? FeaturedStart = DateTime.UtcNow;
+        public DateTime? FeaturedEnd = DateTime.UtcNow.AddDays(7);
     }
 }

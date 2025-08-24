@@ -1,23 +1,117 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+﻿@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 @import "tailwindcss";
 
 @theme {
-    --color-midnight: #121063;
-    --color-tahiti: #3ab7bf;
-    --color-bermuda: #78dcca;
-    --color-secondaryButton:#DB4444;
-    --color-googleTextGray: #3c4043;
-    --color-google-buttonBlue: #1a73e8;
-    --color-google-buttonBlue-hover: #5195ee;
-    --color-google-buttonDark: #202124;
-    --color-google-buttonDark-hover: #555658;
-    --color-google-buttonBorder-light: #dadce0;
-    --color-google-logoBlue: #4285f4;
-    --color-google-logoGreen: #34a853;
-    --color-google-logoYellow: #fbbc05;
-    --color-google-logoRed: #ea4335;
+  --color-midnight: #121063;
+  --color-tahiti: #3ab7bf;
+  --color-bermuda: #78dcca;
+  --color-secondaryButton: #db4444;
+  --color-googleTextGray: #3c4043;
+  --color-google-buttonBlue: #1a73e8;
+  --color-google-buttonBlue-hover: #5195ee;
+  --color-google-buttonDark: #202124;
+  --color-google-buttonDark-hover: #555658;
+  --color-google-buttonBorder-light: #dadce0;
+  --color-google-logoBlue: #4285f4;
+  --color-google-logoGreen: #34a853;
+  --color-google-logoYellow: #fbbc05;
+  --color-google-logoRed: #ea4335;
 
-    --font-inter:"Inter",sans-serif;
+  --default-font-family: "Inter",sans-serif;
+  --font-inter: "Inter", sans-serif;
 
-    
+  --animate-fade-in-up: fade-in-up 1s ease forwards;
+  --animate-card-enter: card-enter 0.8s ease forwards;
+  --animate-stat-enter: stat-enter 0.6s ease forwards;
+  --animate-team-enter: team-enter 0.7s ease forwards;
+  --animate-timeline-slide: timeline-slide 0.8s ease forwards;
+
+  @keyframes fade-in-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes card-enter {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes stat-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes team-enter {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes timeline-slide {
+    from {
+      opacity: 0;
+      transform: translateX(-50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+}
+
+@layer base {
+  html {
+    font-family: var(--font-inter);
+  }
+}
+@layer components {
+  .counter {
+    @apply inline-block;
+  }
+  .timeline-line {
+    @apply absolute left-1/2 transform -translate-x-1/2 h-full w-1 bg-indigo-200 z-0;
+  }
+
+  .mission-card {
+    @apply border-l-4 border-indigo-500 shadow-lg rounded-xl backdrop-blur-sm bg-white/90 hover:shadow-xl transition-all duration-300;
+  }
+  .team-member {
+    @apply transition-all duration-300;
+  }
+  .team-member:hover {
+    @apply transform scale-105;
+  }
+}
+@layer utilities {
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
 }

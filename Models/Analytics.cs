@@ -100,7 +100,8 @@ namespace ECommerceMudblazorWebApp.Models
         public decimal Revenue { get; set; }
         public int UnitsSold { get; set; }
         public string ImageUrl { get; set; } = string.Empty;
-        public string ImagePath {  get; set; } = string.Empty;
+        public string ImagePath { get; set; } = string.Empty;
+        public decimal Price { get; set; }
     }
 
     public class InventoryAlert

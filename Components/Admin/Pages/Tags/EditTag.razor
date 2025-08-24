@@ -1,0 +1,71 @@
+﻿@page "/admin/tags/edit/{Id:int}"
+@using ECommerceMudblazorWebApp.Models
+@using ECommerceMudblazorWebApp.Services.Tags
+@using System.ComponentModel.DataAnnotations
+@inject ITagService TagService
+@inject NavigationManager Nav
+
+<MudPaper Class="p-4">
+    <MudText Typo="Typo.h5">Edit Tag</MudText>
+
+    @if (isLoading)
+    {
+        <MudProgressCircular Indeterminate="true" />
+    }
+    else
+    {
+        <EditForm Model="@Input" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <MudTextField @bind-Value="Input.Name" Label="Tag Name" Required="true" For="@(() => Input.Name)" />
+
+            <MudStaticButton FormAction="FormAction.Submit" Color="Color.Primary" Class="mt-4" Disabled="@isSubmitting">
+                @if (isSubmitting)
+                {
+                    <MudProgressCircular Indeterminate="true" Size="Size.Large" />
+                }
+                else
+                {
+                    <MudText>Submit</MudText>
+                }
+            </MudStaticButton>
+        </EditForm>
+    }
+</MudPaper>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private TagInput Input { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var tag = await TagService.GetTagByIdAsync(Id);
+        if (tag == null) Nav.NavigateTo("/admin/categories");
+        Input.Name = tag?.Name ?? string.Empty;
+        isLoading = false;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        isSubmitting = true;
+        try
+        {
+            var tag = new Tag { Id = Id, Name = Input.Name.Trim() };
+            await TagService.UpdateTagAsync(tag);
+            Nav.NavigateTo("/admin/tags");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private sealed class TagInput
+    {
+        [Required]
+        public string Name { get; set; } = string.Empty;
+    }
+}

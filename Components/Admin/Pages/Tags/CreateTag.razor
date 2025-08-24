@@ -1,0 +1,54 @@
+﻿@page "/admin/tags/create"
+@using ECommerceMudblazorWebApp.Models
+@using ECommerceMudblazorWebApp.Services.Tags
+@using System.ComponentModel.DataAnnotations
+@inject ITagService TagService
+@inject NavigationManager Nav
+
+<MudPaper Class="pa-4 mt-4">
+    <MudText Typo="Typo.h5" Class="font-inter font-bold text-3xl">Create Tag</MudText>
+
+    <EditForm Model="@Input" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <MudTextField @bind-Value="Input.Name" Label="Tag Name" Required="true" For="@(() => Input.Name)" />
+
+        <MudStaticButton FormAction="FormAction.Submit" Color="Color.Primary" Class="mt-4" Disabled="@isSubmitting">
+            @if (isSubmitting)
+            {
+                <MudProgressCircular Indeterminate="true" Size="Size.Large" />
+            }
+            else
+            {
+                <MudText>Submit</MudText>
+            }
+        </MudStaticButton>
+    </EditForm>
+</MudPaper>
+
+@code {
+    private bool isSubmitting = false;
+    private TagInput Input { get; set; } = new TagInput();
+
+    private async Task HandleValidSubmit()
+    {
+        isSubmitting = true;
+        try
+        {
+            var tag = new Tag { Name = Input.Name.Trim() };
+            await TagService.CreateTagAsync(tag);
+            Nav.NavigateTo("/admin/categories");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private sealed class TagInput
+    {
+        [Required]
+        public string Name { get; set; } = string.Empty;
+    }
+}

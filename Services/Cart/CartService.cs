@@ -1,8 +1,6 @@
 using ECommerceMudblazorWebApp.Data;
 using ECommerceMudblazorWebApp.Models;
-using ECommerceMudblazorWebApp.Services.Cart;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Channels;
 
 
 namespace ECommerceMudblazorWebApp.Services.Cart
@@ -12,9 +10,9 @@ namespace ECommerceMudblazorWebApp.Services.Cart
         private readonly IDbContextFactory<ApplicationDbContext> _contextFactory = contextFactory;
         public event Action? OnChange;
 
-        private async Task<ShoppingCart?> GetOrCreateCartAsync(ApplicationDbContext _context, string? userId, string? guestId)
+        private static async Task<ShoppingCart?> GetOrCreateCartAsync(ApplicationDbContext _context, string? userId, string? guestId)
         {
-            
+
             ShoppingCart? cart = null;
 
             if (!string.IsNullOrWhiteSpace(userId))
@@ -65,13 +63,10 @@ namespace ECommerceMudblazorWebApp.Services.Cart
             return cart;
         }
 
-
-
         public async Task AddToCartAsync(int productId, int quantity, string? userId, string? guestId)
         {
             await using var _context = _contextFactory.CreateDbContext();
-            var cart = await GetOrCreateCartAsync(_context,userId, guestId);
-            Console.WriteLine($"[DEBUG] Using ShoppingCart.Id={cart.Id} for user={userId}, guest={guestId}");
+            var cart = await GetOrCreateCartAsync(_context, userId, guestId);
             var existing = cart.Items.FirstOrDefault(i => i.ProductId == productId);
             if (existing != null)
             {
@@ -88,6 +83,8 @@ namespace ECommerceMudblazorWebApp.Services.Cart
                     UnitPrice = product.Price,
                     ShoppingCartId = cart.Id
                 });
+                product.StockQuantity -= quantity;
+                _context.Entry(product).Property(p => p.StockQuantity).IsModified = true;
             }
             await _context.SaveChangesAsync();
             Console.WriteLine($"[DEBUG] SaveChanges wrote entries");
@@ -97,10 +94,15 @@ namespace ECommerceMudblazorWebApp.Services.Cart
         public async Task RemoveFromCartAsync(int productId, string? userId, string guestId)
         {
             await using var _context = _contextFactory.CreateDbContext();
-            var cart = await GetOrCreateCartAsync(_context,userId, guestId);
+            var cart = await GetOrCreateCartAsync(_context, userId, guestId);
             var item = cart.Items.FirstOrDefault(i => i.ProductId == productId);
             if (item != null)
             {
+                var product = await _context.Products.FindAsync(item.Product);
+                if (product != null)
+                {
+                    product.StockQuantity -= item.Quantity;
+                }
                 cart.Items.Remove(item);
                 await _context.SaveChangesAsync();
                 OnChange?.Invoke();
@@ -110,7 +112,7 @@ namespace ECommerceMudblazorWebApp.Services.Cart
         public async Task UpdateQuantityAsync(int productId, int quantity, string? userId, string guestId)
         {
             await using var _context = _contextFactory.CreateDbContext();
-            var cart = await GetOrCreateCartAsync(_context,userId, guestId);
+            var cart = await GetOrCreateCartAsync(_context, userId, guestId);
             var item = cart.Items.FirstOrDefault(i => i.ProductId == productId);
             if (item == null) return;
 
@@ -143,7 +145,7 @@ namespace ECommerceMudblazorWebApp.Services.Cart
                 Console.WriteLine("No valid userId or guestId found to get cart item count.");
                 return 0;
             }
-            var cart = await GetOrCreateCartAsync(_context,userId, guestId);
+            var cart = await GetOrCreateCartAsync(_context, userId, guestId);
             return cart.Items.Sum(i => i.Quantity);
         }
 
@@ -165,15 +167,24 @@ namespace ECommerceMudblazorWebApp.Services.Cart
                 // Edge case: nothing to use
                 return new List<CartItem>();
             }
-            var cart = await GetOrCreateCartAsync(_context,userId, guestId);
-            return cart.Items?.ToList() ?? new List<CartItem>();
+            var cart = await GetOrCreateCartAsync(_context, userId, guestId);
+            return cart.Items?.ToList() ?? [];
         }
 
         public async Task ClearCartAsync(string? userId, string guestId)
         {
             await using var _context = _contextFactory.CreateDbContext();
-            var cart = await GetOrCreateCartAsync(_context,userId, guestId);
+            var cart = await GetOrCreateCartAsync(_context, userId, guestId);
             if (cart == null) return;
+            foreach (var item in cart.Items)
+            {
+                var product = await _context.Products.FindAsync(item.ProductId);
+                if (product != null)
+                {
+                    product.StockQuantity += item.Quantity;
+                    _context.Entry(product).Property(p => p.StockQuantity).IsModified = true;
+                }
+            }
             cart.Items.Clear();
             await _context.SaveChangesAsync();
             OnChange?.Invoke();
@@ -215,7 +226,7 @@ namespace ECommerceMudblazorWebApp.Services.Cart
                 }
 
                 // Remove guest cart
-                if (guestCart.Id != 0)
+                if (guestCart != null)
                     _context.ShoppingCarts.Remove(guestCart);
 
                 await _context.SaveChangesAsync();

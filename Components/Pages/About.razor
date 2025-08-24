@@ -1,0 +1,312 @@
+@page "/about"
+@using MudBlazor
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavManager
+@implements IAsyncDisposable
+
+<!-- Hero Section -->
+<div class="relative min-h-[70vh] overflow-hidden bg-gradient-to-br from-blue-900 to-indigo-800 text-white">
+    <div class="absolute inset-0 z-0">
+        <div class="absolute inset-0 bg-[url('https://www.svgrepo.com/show/508699/circuit-board.svg')] bg-[length:1200px] opacity-10"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-blue-900/70 to-indigo-800/70"></div>
+    </div>
+    
+    <div class="container mx-auto px-4 py-24 relative z-10 flex flex-col justify-center items-center text-center">
+        <MudText Typo="Typo.h3" data-animate="animate-fade-in-up"
+                 Class="mb-6 opacity-0"
+                 >
+            BLAZORED ELECTRONICS
+        </MudText>
+
+        <MudText Typo="Typo.h2"
+                 Class="mb-8 max-w-3xl opacity-0" data-animate="animate-fade-in-up"
+                 >
+            Empowering Your Digital World with Quality Products
+        </MudText>
+
+        <MudText Class="text-xl mb-12 max-w-2xl opacity-0" data-animate="animate-fade-in-up"
+                 >
+            We're on a mission...
+        </MudText>
+
+        <div class="opacity-0" data-animate="animate-fade-in-up" data-delay="0.45">
+            <MudButton Variant="Variant.Filled"
+                       onclick="@(()=>NavManager.NavigateTo("/products"))"
+                       Class="bg-indigo-600 hover:bg-indigo-500 transform hover:scale-105 transition-all duration-300"
+                       style="color:white;"
+                       EndIcon="@Icons.Material.Filled.ArrowForward">
+                Explore Our Products
+            </MudButton>
+        </div>
+    </div>
+
+</div>
+
+<!-- Mission Statement -->
+<div class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4">
+        <MudText Typo="Typo.h4" Class="text-center mb-4 text-indigo-700">OUR MISSION</MudText>
+        <MudText Typo="Typo.h3" Class="text-center mb-16 max-w-3xl mx-auto">Driving innovation through technology</MudText>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <MudCard Class="opacity-0 mission-card" data-animate="animate-card-enter" Elevation="0">
+                <MudCardContent>
+                    <div class="flex items-center mb-4">
+                        <MudIcon Icon="@Icons.Material.Filled.Star" Class="text-indigo-600 mr-3 text-2xl" />
+                        <MudText Typo="Typo.h6">Quality First</MudText>
+                    </div>
+                    <MudText>
+                        We rigorously test every product to ensure it meets our high standards for performance and durability.
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+            
+            <MudCard Class="opacity-0 mission-card" data-animate="animate-card-enter" Elevation="0" style="animation-delay: 0.2s">
+                <MudCardContent>
+                    <div class="flex items-center mb-4">
+                        <MudIcon Icon="@Icons.Material.Filled.Public" Class="text-indigo-600 mr-3 text-2xl" />
+                        <MudText Typo="Typo.h6">Accessible Tech</MudText>
+                    </div>
+                    <MudText>
+                        Making advanced technology available to everyone at competitive prices without compromising quality.
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+            
+            <MudCard Class="opacity-0 mission-card" data-animate="animate-card-enter" Elevation="0" style="animation-delay: 0.4s">
+                <MudCardContent>
+                    <div class="flex items-center mb-4">
+                        <MudIcon Icon="@Icons.Material.Filled.EnergySavingsLeaf" Class="text-indigo-600 mr-3 text-2xl" />
+                        <MudText Typo="Typo.h6">Sustainable Future</MudText>
+                    </div>
+                    <MudText>
+                        Committed to eco-friendly practices and reducing electronic waste through recycling programs.
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Section -->
+<div class="py-20 bg-indigo-50">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div class="opacity-0" data-animate="animate-stat-enter" style="animation-delay: 0.1s">
+                <MudText Typo="Typo.h3" Class="text-indigo-700 font-bold mb-2">
+                    <span class="counter" data-target="13">0</span>+
+                </MudText>
+                <MudText>Years in Business</MudText>
+            </div>
+            
+            <div class="opacity-0" data-animate="animate-stat-enter" style="animation-delay: 0.3s">
+                <MudText Typo="Typo.h3" Class="text-indigo-700 font-bold mb-2">
+                    <span class="counter" data-target="2">0</span>M+
+                </MudText>
+                <MudText>Products Sold</MudText>
+            </div>
+            
+            <div class="opacity-0" data-animate="animate-stat-enter" style="animation-delay: 0.5s">
+                <MudText Typo="Typo.h3" Class="text-indigo-700 font-bold mb-2">
+                    <span class="counter" data-target="98">0</span>%
+                </MudText>
+                <MudText>Customer Satisfaction</MudText>
+            </div>
+            
+            <div class="opacity-0" data-animate="animate-stat-enter" style="animation-delay: 0.7s">
+                <MudText Typo="Typo.h3" Class="text-indigo-700 font-bold mb-2">
+                    <span class="counter" data-target="50">0</span>+
+                </MudText>
+                <MudText>Countries Served</MudText>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Team Section -->
+<div class="py-20">
+    <div class="container mx-auto px-4">
+        <MudText Typo="Typo.h4" Class="text-center mb-4 text-indigo-700">OUR TEAM</MudText>
+        <MudText Typo="Typo.h3" Class="text-center mb-16 max-w-3xl mx-auto">Experts Driving Innovation</MudText>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            <div class="opacity-0 group" data-animate="animate-team-enter">
+                <div class="rounded-full overflow-hidden mx-auto mb-6 w-48 h-48 border-4 border-indigo-100 group-hover:border-indigo-300 transition-all duration-300">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80" 
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                         alt="Alex Johnson" />
+                </div>
+                <MudText Typo="Typo.h6" Class="text-center mb-1">Alex Johnson</MudText>
+                <MudText Class="text-center text-gray-600 mb-4">CEO & Founder</MudText>
+                <MudText Class="text-center text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    Tech enthusiast with 15+ years in electronics industry
+                </MudText>
+            </div>
+            
+            <div class="opacity-0 group" data-animate="animate-team-enter" style="animation-delay: 0.2s">
+                <div class="rounded-full overflow-hidden mx-auto mb-6 w-48 h-48 border-4 border-indigo-100 group-hover:border-indigo-300 transition-all duration-300">
+                    <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=776&q=80" 
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                         alt="Sarah Chen" />
+                </div>
+                <MudText Typo="Typo.h6" Class="text-center mb-1">Sarah Chen</MudText>
+                <MudText Class="text-center text-gray-600 mb-4">CTO</MudText>
+                <MudText Class="text-center text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    Former hardware engineer at leading tech companies
+                </MudText>
+            </div>
+            
+            <div class="opacity-0 group" data-animate="animate-team-enter" style="animation-delay: 0.4s">
+                <div class="rounded-full overflow-hidden mx-auto mb-6 w-48 h-48 border-4 border-indigo-100 group-hover:border-indigo-300 transition-all duration-300">
+                    <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80" 
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                         alt="Marcus Rivera" />
+                </div>
+                <MudText Typo="Typo.h6" Class="text-center mb-1">Marcus Rivera</MudText>
+                <MudText Class="text-center text-gray-600 mb-4">Head of Product</MudText>
+                <MudText Class="text-center text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    Passionate about finding innovative tech solutions
+                </MudText>
+            </div>
+            
+            <div class="opacity-0 group" data-animate="animate-team-enter" style="animation-delay: 0.6s">
+                <div class="rounded-full overflow-hidden mx-auto mb-6 w-48 h-48 border-4 border-indigo-100 group-hover:border-indigo-300 transition-all duration-300">
+                    <img src="https://images.unsplash.com/photo-1552058544-f2b08422138a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=798&q=80" 
+                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                         alt="Priya Sharma" />
+                </div>
+                <MudText Typo="Typo.h6" Class="text-center mb-1">Priya Sharma</MudText>
+                <MudText Class="text-center text-gray-600 mb-4">Customer Experience</MudText>
+                <MudText Class="text-center text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    Dedicated to creating exceptional customer journeys
+                </MudText>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Timeline Section -->
+<div class="py-20 bg-gray-50">
+    <div class="container mx-auto px-4">
+        <MudText Typo="Typo.h4" Class="text-center mb-4 text-indigo-700">OUR JOURNEY</MudText>
+        <MudText Typo="Typo.h3" Class="text-center mb-16 max-w-3xl mx-auto">Milestones in Innovation</MudText>
+
+        <div class="max-w-4xl mx-auto">
+            <MudTimeline Class="relative">
+
+                <!-- 2010 -->
+                <MudTimelineItem Class="mb-16 relative z-10 opacity-0" data-animate="animate-timeline-slide">
+                    <ChildContent>
+                        <MudText Typo="Typo.h5" Class="text-indigo-700"> July 2025</MudText>
+                        <MudText Typo="Typo.h6" Class="mb-2">Ecommerce Site Created</MudText>
+                        <MudText>
+                            Worked under Attain Enterprise Solution Ltd to create an online electronic ecommerce store
+                        </MudText>
+                    </ChildContent>
+                    <ItemDot>
+                        <div class="w-6 h-6 rounded-full bg-indigo-600 border-4 border-white shadow-lg"></div>
+                    </ItemDot>
+                </MudTimelineItem>
+
+                <!-- 2014 -->
+                <MudTimelineItem Position="End"
+                                 Class="mb-16 relative z-10 opacity-0"
+                                 data-animate="animate-timeline-slide"
+                                 Style="animation-delay:0.2s">
+                    <ChildContent>
+                        <MudText Typo="Typo.h5" Class="text-indigo-700"> August 2025</MudText>
+                        <MudText Typo="Typo.h6" Class="mb-2">+400k worth of sales</MudText>
+                        <MudText>
+                            Reached a major milestone with 6 satisfied customers
+                        </MudText>
+                    </ChildContent>
+                    <ItemDot>
+                        <div class="w-6 h-6 rounded-full bg-indigo-600 border-4 border-white shadow-lg"></div>
+                    </ItemDot>
+                </MudTimelineItem>
+
+            </MudTimeline>
+        </div>
+    </div>
+</div>
+
+<!-- CTA Section -->
+<div class="py-20 bg-gradient-to-r from-indigo-700 to-purple-800 text-white">
+    <div class="container mx-auto px-4 text-center">
+        <MudText Typo="Typo.h3" Class="mb-6">Join Our Tech Community</MudText>
+        <MudText Class="text-xl mb-10 max-w-2xl mx-auto">
+            Subscribe to our newsletter for exclusive deals, tech insights, and product launches
+        </MudText>
+        
+        <div class="max-w-lg mx-auto flex flex-col sm:flex-row gap-4">
+            <MudTextField T="string" Label="Your Email" Variant="Variant.Outlined" Class="flex-grow bg-white rounded-lg" />
+            <MudButton Variant="Variant.Filled" 
+                       Class="bg-indigo-500 hover:bg-indigo-400 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-indigo-500/30"
+                       EndIcon="@Icons.Material.Filled.Send">
+                Subscribe
+            </MudButton>
+        </div>
+    </div>
+</div>
+
+@code {
+    private IJSObjectReference? module;
+    private bool _aboutPageInitialized = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_aboutPageInitialized)
+        {
+            _aboutPageInitialized = true;
+
+            var modulePath = new Uri(new Uri(NavManager.BaseUri), "js/aboutPage.js").ToString();
+
+            try
+            {
+                module = await JSRuntime.InvokeAsync<IJSObjectReference>("import", modulePath);
+
+                if (module is not null)
+                {
+                    // small delay to let DOM + Tailwind animations settle
+                    await Task.Delay(100);
+
+                    await module.InvokeVoidAsync("initAnimations");
+                    await module.InvokeVoidAsync("animateCounters");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Failed to import module '{modulePath}': {ex.Message}");
+            }
+        }
+    }
+
+
+    public async ValueTask DisposeAsync()
+    {
+        if (module is null)
+            return;
+
+        try
+        {
+            await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+            // Circuit already disconnected � nothing to do.
+        }
+        catch (TaskCanceledException)
+        {
+            // Operation canceled during shutdown � ignore.
+        }
+        catch (ObjectDisposedException)
+        {
+            // JSRuntime already disposed � ignore.
+        }
+        catch (Exception ex)
+        {
+            // Optional: log the unexpected exception via ILogger if you have one.
+            Console.Error.WriteLine($"Unexpected exception disposing JS module: {ex}");
+        }
+    }
+}

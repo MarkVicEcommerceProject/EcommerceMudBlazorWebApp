@@ -40,8 +40,26 @@
         [Required]
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        public List<ProductCategory> ProductCategories { get; set; } = new List<ProductCategory>();
 
-        
+        public bool IsFeatured { get; set; } = false;
+        public bool IsActive { get; set; } = true;
+        public bool IsDailyDeal { get; set; } = false;
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? DailyDealPrice { get; set; }
+        public bool IsFlashSale { get; set; } = false;  
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? FlashSalePrice { get; set; }
+        public DateTime? FlashSaleStart { get; set; }
+        public DateTime? FlashSaleEnd { get; set; }
+        public int ViewsCount { get; set; } = 0;             
+        public int TotalSalesCount { get; set; } = 0;
+
+
+        public List<ProductCategory> ProductCategories { get; set; } = new List<ProductCategory>();
+        public ICollection<ProductTag> ProductTags { get; set; } = new List<ProductTag>();
+
+
     }
 }

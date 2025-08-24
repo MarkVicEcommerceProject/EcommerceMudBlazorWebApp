@@ -23,8 +23,6 @@
         <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
             <DataAnnotationsValidator />
 
-            
-
             <MudGrid>
                 <MudItem xs="12">
                     <MudStaticTextField For="@(() => Input.Email)" @bind-Value="Input.Email" 

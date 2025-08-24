@@ -20,26 +20,71 @@ namespace ECommerceMudblazorWebApp.Services.Orders
                 order.Status = OrderStatus.PENDING;
 
                 var random = new Random(order.Id);
-                int days = random.Next(3,6);
+                int days = random.Next(3, 6);
                 order.DeliveredDate = order.OrderDate.AddDays(days);
 
-                foreach (var item in order.OrderItems)
+                _db.Orders.Add(order);
+
+                await _db.SaveChangesAsync();
+
+                // --- Sales + Stats Update ---
+                var today = DateTime.UtcNow.Date;
+
+                // 1. Group items by product (avoid duplicate lookups if order has multiple same products)
+                var groupedItems = order.OrderItems
+                    .GroupBy(i => i.ProductId)
+                    .Select(g => new { ProductId = g.Key, Quantity = g.Sum(x => x.Quantity) })
+                    .ToList();
+
+                // 2. Fetch all affected products in one query
+                var productIds = groupedItems.Select(g => g.ProductId).ToList();
+                var products = await _db.Products
+                    .Where(p => productIds.Contains(p.Id))
+                    .ToListAsync();
+
+                // 3. Fetch existing daily stats in one query
+                var stats = await _db.ProductDailyStat
+                    .Where(s => productIds.Contains(s.ProductId) && s.Date == today)
+                    .ToListAsync();
+
+                foreach (var group in groupedItems)
                 {
-                    _db.Entry(item).State = EntityState.Added;
+                    var product = products.FirstOrDefault(p => p.Id == group.ProductId);
+                    if (product != null)
+                    {
+                        product.TotalSalesCount += group.Quantity;
+                        product.StockQuantity -= group.Quantity;
+
+                        // update stat
+                        var stat = stats.FirstOrDefault(s => s.ProductId == group.ProductId);
+                        if (stat == null)
+                        {
+                            stat = new ProductDailyStat
+                            {
+                                ProductId = product.Id,
+                                Date = today,
+                                Sales = group.Quantity,
+                                Views = 0
+                            };
+                            _db.ProductDailyStat.Add(stat);
+                        }
+                        else
+                        {
+                            stat.Sales += group.Quantity;
+                        }
+                    }
                 }
 
-                _db.Orders.Add(order);
                 await _db.SaveChangesAsync();
                 await tx.CommitAsync();
-                return order.Id;
 
+                return order.Id;
             }
             catch
             {
                 await tx.RollbackAsync();
                 throw;
             }
-
         }
 
         public async Task<Order> GetOrderByIdAsync(int orderId)
@@ -66,14 +111,35 @@ namespace ECommerceMudblazorWebApp.Services.Orders
         public async Task CancelOrderAsync(int orderId)
         {
             await using var _db = _dbContextFactory.CreateDbContext();
-            var order = await _db.Orders.FindAsync(orderId) ?? throw new KeyNotFoundException($"Order with ID {orderId} not found.");
+            var order = await _db.Orders
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                .FirstOrDefaultAsync(o => o.Id == orderId)
+                ?? throw new KeyNotFoundException($"Order with ID {orderId} not found.");
+
+            if (order.Status == OrderStatus.CANCELLED)
+                return;
+
             await using var tx = await _db.Database.BeginTransactionAsync();
+
             try
             {
+                foreach (var item in order.OrderItems)
+                {
+                    if (item.Product != null)
+                    {
+                        item.Product.StockQuantity += item.Quantity;
+                        _db.Entry(item.Product).Property(p => p.StockQuantity).IsModified = true;
+                        _db.Products.Update(item.Product);
+                    }
+                }
+
                 order.Status = OrderStatus.CANCELLED;
                 _db.Orders.Update(order);
+
                 await _db.SaveChangesAsync();
                 await tx.CommitAsync();
+
                 OnChange?.Invoke();
             }
             catch
@@ -416,13 +482,14 @@ namespace ECommerceMudblazorWebApp.Services.Orders
                     oi.Order.Status == OrderStatus.DELIVERED &&
                     oi.Order.OrderDate >= startDate &&
                     oi.Order.OrderDate <= endDate)
-                .GroupBy(oi => new { oi.ProductId, ProductName = oi.Product.Name, oi.Product.ImagePath, oi.Product.ImageUrl })
-                .Select(g => new TopProduct
+                .GroupBy(oi => new { oi.ProductId, ProductName = oi.Product.Name, oi.Product.ImagePath, oi.Product.ImageUrl,oi.Product.Price })
+                .Select(g => new 
                 {
                     Id = g.Key.ProductId,
                     Name = g.Key.ProductName,
                     ImagePath = g.Key.ImagePath,
                     ImageUrl = g.Key.ImageUrl,
+                    Price = g.Key.Price,
                     UnitsSold = g.Sum(x => x.Quantity),
                     Revenue = g.Sum(x => x.Quantity * x.UnitPrice)
                 })
@@ -450,6 +517,7 @@ namespace ECommerceMudblazorWebApp.Services.Orders
                 Name = x.Name ?? string.Empty,
                 Category = categoryMap.TryGetValue(x.Id, out var cat) ? (cat ?? string.Empty) : string.Empty,
                 ImageUrl = x.ImageUrl ?? x.ImagePath ?? string.Empty,
+                Price = x.Price,
                 UnitsSold = x.UnitsSold,
                 Revenue = x.Revenue
             })

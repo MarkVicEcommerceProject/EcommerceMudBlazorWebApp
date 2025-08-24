@@ -490,7 +490,6 @@
 
     private void ReorderProduct(int productId)
     {
-        // In a real app, this would trigger a reorder process
         var product = inventoryAlerts.FirstOrDefault(p => p.ProductId == productId);
         if (product != null)
         {
@@ -502,7 +501,6 @@
 
     private void ApplyAiRecommendations()
     {
-        // In a real app, this would apply the AI recommendations
         showAiDialog = false;
     }
 
@@ -534,7 +532,6 @@
         selectedTimeframe = value;
         UpdateDateRange();
         await LoadRevenueAndOrdersDataAsync();
-        //await LoadRevenueChartAsync();
     }
 
     private string[] ReduceLabelsForDisplay(string[] labels, int maxLabels = 10)

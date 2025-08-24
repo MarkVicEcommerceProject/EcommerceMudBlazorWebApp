@@ -4,6 +4,7 @@ using ECommerceMudblazorWebApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ECommerceMudblazorWebApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250821054009_AddRecomendationTablesAndPerformanceIndices")]
+    partial class AddRecomendationTablesAndPerformanceIndices
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -264,8 +267,6 @@ namespace ECommerceMudblazorWebApp.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StartAt", "EndAt");
-
                     b.ToTable("FlashSales");
                 });
 
@@ -294,9 +295,6 @@ namespace ECommerceMudblazorWebApp.Migrations
                     b.HasIndex("FlashSaleId");
 
                     b.HasIndex("ProductId");
-
-                    b.HasIndex("FlashSaleId", "ProductId")
-                        .IsUnique();
 
                     b.ToTable("FlashSaleItems");
                 });
@@ -368,8 +366,6 @@ namespace ECommerceMudblazorWebApp.Migrations
 
                     b.HasIndex("OrderId", "ProductId");
 
-                    b.HasIndex("ProductId", "OrderId");
-
                     b.ToTable("OrderItems");
                 });
 
@@ -383,9 +379,6 @@ namespace ECommerceMudblazorWebApp.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<decimal?>("DailyDealPrice")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -577,9 +570,6 @@ namespace ECommerceMudblazorWebApp.Migrations
 
                     b.HasIndex("TagId");
 
-                    b.HasIndex("ProductId", "TagId")
-                        .IsUnique();
-
                     b.ToTable("ProductTags");
                 });
 
@@ -598,7 +588,7 @@ namespace ECommerceMudblazorWebApp.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("ViewedAt")
                         .HasColumnType("datetime2");
@@ -606,8 +596,6 @@ namespace ECommerceMudblazorWebApp.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ProductId");
-
-                    b.HasIndex("UserId");
 
                     b.HasIndex("ViewedAt");
 
@@ -658,9 +646,6 @@ namespace ECommerceMudblazorWebApp.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
 
                     b.ToTable("Tags");
                 });
@@ -972,7 +957,7 @@ namespace ECommerceMudblazorWebApp.Migrations
             modelBuilder.Entity("ECommerceMudblazorWebApp.Models.ProductTag", b =>
                 {
                     b.HasOne("ECommerceMudblazorWebApp.Models.Product", "Product")
-                        .WithMany("ProductTags")
+                        .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -996,13 +981,7 @@ namespace ECommerceMudblazorWebApp.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ECommerceMudblazorWebApp.Data.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
-
                     b.Navigation("Product");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ECommerceMudblazorWebApp.Models.ShoppingCart", b =>
@@ -1092,8 +1071,6 @@ namespace ECommerceMudblazorWebApp.Migrations
             modelBuilder.Entity("ECommerceMudblazorWebApp.Models.Product", b =>
                 {
                     b.Navigation("ProductCategories");
-
-                    b.Navigation("ProductTags");
                 });
 
             modelBuilder.Entity("ECommerceMudblazorWebApp.Models.ShoppingCart", b =>

@@ -1,77 +1,258 @@
 ﻿@page "/admin/products"
 @using ECommerceMudblazorWebApp.Components.Admin.Services
+@using ECommerceMudblazorWebApp.Services.Recommendations
 @using ECommerceMudblazorWebApp.Components.Admin.Shared
 @using ECommerceMudblazorWebApp.Models
 @attribute [Authorize(Roles = "Admin")]
 @inject IProductService ProductService
+@inject IRecommendationService RecommendationService
 @inject NavigationManager NavigationManager
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
 <PageTitle>Product Management</PageTitle>
 
-<section class="mx-auto py-6 md:w-1/3">
-    <MudLink Href="/admin/products/create" Class="mud-button mud-button-filled mud-button-primary">
-        Create New Product
-    </MudLink>
-</section>
+<section class="mx-auto py-6 md:w-full">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <MudText Typo="Typo.h4" Class="font-bold">Products</MudText>
+            <MudText Typo="Typo.caption">Manage your product catalog, featured items, daily deals and flash sales.</MudText>
+        </div>
+        <div class="flex gap-2">
+            <MudLink Href="/admin/products/create" Class="mud-button mud-button-filled mud-button-primary">
+                <MudIcon Icon="@Icons.Material.Filled.Add" />&nbsp;Create Product
+            </MudLink>
+            <MudButton Variant="Variant.Outlined" OnClick="ReloadAll" StartIcon="@Icons.Material.Filled.Refresh">Refresh</MudButton>
+        </div>
+    </div>
 
-<section class="md:m-2" >
-    <MudTable Items="FilteredItems" Striped="true" Hover="true" SortLabel="Sort by" FilterLabel="Filter by" T="Product">
-        <ToolBarContent>
-            <MudText Typo="Typo.h6">Products</MudText>
-            <MudSpacer />
-            <MudTextField @bind-Value="searchString1" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-        </ToolBarContent>
-        <HeaderContent>
-            <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortBy="new Func<Product, object>(p => p.Name)">Name</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortBy="new Func<Product, object>(p => p.Price)">Price</MudTableSortLabel></MudTh>
-            <MudTh>Actions</MudTh>
-        </HeaderContent>
-        <RowTemplate>
-            <MudTd DataLabel="Product Name">@context.Name</MudTd>
-            <MudTd DataLabel="Price">Ksh. @context.Price.ToString("N2")</MudTd>
-            <MudTd DataLabel="Actions" Class="flex justify-center align-middle">
-                <MudTooltip Text="View Product Details">
-                    <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Href="@($"/admin/products/details/{context.Id}")">
-                        View
-                    </MudIconButton>
-                </MudTooltip>
-                <MudTooltip Text="Edit Product" Color="Color.Info">
-                    <MudIconButton Href="@($"/admin/products/edit/{context.Id}")" Icon="@Icons.Material.Filled.Edit" Color="Color.Success">
-                        Edit
-                    </MudIconButton>
-                </MudTooltip>
-                <MudTooltip Text="Delete Product" Color="Color.Error">
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" onclick="@((e)=> openDialogAsync(context.Id,context.Name,context.Description))" Color="Color.Error">
-                        Delete
-                    </MudIconButton>
-                </MudTooltip>
-                
-            </MudTd>
-        </RowTemplate>
-        <PagerContent>
-            <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" />
-        </PagerContent>
-    </MudTable>
+    <!-- Top admin panels: Featured, Daily Deals, Flash Sales -->
+    <MudGrid Class="mb-6">
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Featured Products</MudText>
+                @if (featured == null)
+                {
+                    <MudProgressCircular Indeterminate="true" />
+                }
+                else if (!featured.Any())
+                {
+                    <MudText Typo="Typo.caption">No featured products</MudText>
+                }
+                <MudList T="FeaturedProduct" Dense="true">
+                    @foreach (var p in featured.Take(5))
+                    {
+                        <MudListItem>
+                            <MudAvatar Size="Size.Medium" >
+                                <MudImage Src="@(p.ImageUrl ?? p.ImagePath)"></MudImage>
+                            </MudAvatar>
+                            <div class="ml-2">
+                                <div>@p.Name</div>
+                                <div class="mud-text-caption">Ksh. @p.Price.ToString("N2")</div>
+                            </div>
+                            <MudSpacer />
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Href="@($"/admin/products/details/{p.Id}")" />
+                        </MudListItem>
+                    }
+                </MudList>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Today's Deals</MudText>
+                @if (dailyDeals == null)
+                {
+                    <MudProgressCircular Indeterminate="true" />
+                }
+                else if (!dailyDeals.Any())
+                {
+                    <MudText Typo="Typo.caption">No daily deals for today</MudText>
+                }
+                else
+                {
+                    <MudList T="DailyDeal" Dense="true">
+                        @foreach (var d in dailyDeals.Take(5))
+                        {
+                            <MudListItem>
+                                <div>
+                                    <div>@d.Product.Name</div>
+                                    <div class="mud-text-caption">
+                                        Ksh. @d.DealPrice.ToString("N2")
+                                        <span class="text-gray-400 line-through">@d.Product.Price</span>
+                                    </div>
+                                    
+                                </div>
+                                <MudSpacer />
+                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Href="@($"/admin/products/details/{d.Product.Id}")" />
+                            </MudListItem>
+                        }
+                    </MudList>
+                }
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12" sm="12" md="4">
+            <MudPaper Class="pa-4">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">Active Flash Sales</MudText>
+                @if (flashSaleItems == null)
+                {
+                    <MudProgressCircular Indeterminate="true" />
+                }
+                else if (!flashSaleItems.Any())
+                {
+                    <MudText Typo="Typo.caption">No active flash sales</MudText>
+                }
+                else
+                {
+                    <MudList T="FlashSaleItem" Dense="true">
+                        @foreach (var f in flashSaleItems.Take(6))
+                        {
+                            <MudListItem>
+                                <div>
+                                    <div class="font-semibold">@(f.Product?.Name ?? "—")</div>
+                                    <div class="mud-text-caption">Sale Ksh. @f.SalePrice.ToString("N2")</div>
+                                </div>
+                                <MudSpacer />
+                                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Href="@($"/admin/products/details/{f.ProductId}")" />
+                            </MudListItem>
+                        }
+                    </MudList>
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+    <!-- Products table -->
+    <section class="md:m-2" >
+        <MudTable Items="FilteredItems" Striped="true" Hover="true" SortLabel="Sort by" FilterLabel="Filter by" T="Product">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">All Products</MudText>
+                <MudSpacer />
+                <MudTextField @bind-Value="searchString1" Placeholder="Search by name or SKU" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortBy="new Func<Product, object>(p => p.Name)">Name</MudTableSortLabel></MudTh>
+                <MudTh>SKU</MudTh>
+                <MudTh><MudTableSortLabel SortBy="new Func<Product, object>(p => p.Price)">Price</MudTableSortLabel></MudTh>
+                <MudTh>Stock</MudTh>
+                <MudTh>Active</MudTh>
+                <MudTh><MudTableSortLabel InitialDirection="SortDirection.Descending" SortBy="new Func<Product, object>(p=>p.IsFeatured)">Featured</MudTableSortLabel></MudTh>
+                <MudTh>Flash Sale</MudTh>
+                <MudTh>Daily Deal</MudTh>
+                <MudTh>Actions</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Product Name">@context.Name</MudTd>
+                <MudTd DataLabel="SKU">@context.SKU</MudTd>
+                <MudTd DataLabel="Price">Ksh. @context.Price.ToString("N2")</MudTd>
+                <MudTd DataLabel="Stock">@context.StockQuantity</MudTd>
+                <MudTd DataLabel="Active">
+                    @if (context.IsActive)
+                    {
+                        <MudChip T="string" Color="Color.Success" Variant="Variant.Outlined" Size="Size.Small">Active</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Default" Variant="Variant.Outlined" Size="Size.Small">Hidden</MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Featured">
+                    @if (context.IsFeatured)
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Star" Color="Color.Warning" />
+                    }
+                </MudTd>
+                <MudTd DataLabel="Flash Sale">
+                    @if (context.IsFlashSale)
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.LocalOffer" Color="Color.Error" />
+                    }
+                </MudTd>
+                <MudTd DataLabel="Daily Deal">
+                    @if (context.IsDailyDeal)
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Today" Color="Color.Tertiary" />
+                    }
+                </MudTd>
+                <MudTd DataLabel="Actions" Class="flex justify-center align-middle gap-2">
+                    <MudTooltip Text="View Product Details"><MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" Href="@($"/admin/products/details/{context.Id}")" /></MudTooltip>
+                    <MudTooltip Text="Edit Product"><MudIconButton Href="@($"/admin/products/edit/{context.Id}")" Icon="@Icons.Material.Filled.Edit" Color="Color.Success" /></MudTooltip>
+                    <MudTooltip Text="Delete Product"><MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@((e) => openDialogAsync(context.Id, context.Name, context.Description))" Color="Color.Error" /></MudTooltip>
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" />
+            </PagerContent>
+        </MudTable>
+    </section>
 </section>
 
 @code {
     private string searchString1 = string.Empty;
     private List<Product> products = new();
-
     private IEnumerable<Product> FilteredItems => string.IsNullOrWhiteSpace(searchString1)
         ? products
-        : products.Where(p => p.Name.Contains(searchString1, StringComparison.OrdinalIgnoreCase)).ToList();
+        : products.Where(p => p.Name.Contains(searchString1, StringComparison.OrdinalIgnoreCase) || (!string.IsNullOrEmpty(p.SKU) && p.SKU.Contains(searchString1, StringComparison.OrdinalIgnoreCase))).ToList();
 
-    private async Task openDialogAsync(int productId,string name,string description)
+    private List<Product> featured = new();
+    private List<DailyDealDto> dailyDeals = new();
+    private List<FlashSaleItem> flashSaleItems = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAllAsync();
+    }
+
+    private async Task LoadAllAsync()
+    {
+        products = (await ProductService.GetAllProductsAsync()).ToList();
+
+        // Load recommended sets (non-blocking would be nicer; keep simple)
+        try
+        {
+            featured = (await RecommendationService.GetFeaturedProductsAsync(10)).ToList();
+        }
+        catch (Exception ex)
+        {
+            featured = new();
+            Console.WriteLine($"Error loading featured: {ex.Message}");
+        }
+
+        try
+        {
+            dailyDeals = (await RecommendationService.GetDailyDealsAsync(DateTime.UtcNow.Date, 5)).ToList();
+        }
+        catch
+        {
+            dailyDeals = new();
+        }
+
+        try
+        {
+            var flashProducts = (await RecommendationService.GetFlashSalesAsync(DateTime.UtcNow, 20)).ToList();
+            flashSaleItems = flashProducts.Select(p => new FlashSaleItem { ProductId = p.Id, Product = p, SalePrice = p.FlashSalePrice ?? 0 }).ToList();
+        }
+        catch
+        {
+            flashSaleItems = new();
+        }
+    }
+
+    private async Task ReloadAll()
+    {
+        await LoadAllAsync();
+        StateHasChanged();
+    }
+
+    private async Task openDialogAsync(int productId, string name, string description)
     {
         var parameters = new DialogParameters
         {
             {nameof(DeleteDialog.ItemId), productId },
             {nameof(DeleteDialog.ItemName), name },
             {nameof(DeleteDialog.ItemDescription), description },
-            {nameof(DeleteDialog.OnConfirmDelete),EventCallback.Factory.Create<int>(this,DeleteProductAsync)}
+            {nameof(DeleteDialog.OnConfirmDelete), EventCallback.Factory.Create<int>(this, DeleteProductAsync)}
         };
 
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium };
@@ -81,20 +262,14 @@
         var result = await dialogReference.Result;
         if (!result.Canceled)
         {
-            // Optionally refresh the list or navigate
             Snackbar.Add("Product deleted successfully.", Severity.Success);
-            NavigationManager.NavigateTo("/admin/products", forceLoad: true);
+            await LoadAllAsync();
+            StateHasChanged();
         }
     }
 
-    protected override async Task OnInitializedAsync()
-    {
-        products = (await ProductService.GetAllProductsAsync()).ToList();
-    }
     private async Task DeleteProductAsync(int id)
     {
         await ProductService.DeleteProductAsync(id);
     }
-
-
 }

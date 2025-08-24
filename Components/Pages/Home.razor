@@ -1,13 +1,16 @@
 ﻿@page "/"
 @using ECommerceMudblazorWebApp.Models
 @using ECommerceMudblazorWebApp.Services.Cart
+@using ECommerceMudblazorWebApp.Services.Orders
+@using ECommerceMudblazorWebApp.Services.Recommendations
 @using MudBlazor
 @using ECommerceMudblazorWebApp.Components.Admin.Services
 @using System.Security.Claims
-
 @inject NavigationManager NavigationManager
 @inject IProductService ProductService
 @inject ICartService CartService
+@inject IOrderService OrderService
+@inject IRecommendationService RecommendationService  
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IJSRuntime JSRuntime
 
@@ -28,11 +31,11 @@ else
         <div class="rounded-lg bg-white p-4 shadow-sm">
             <h3 class="mb-4 font-semibold text-gray-800">Shop by Category</h3>
             <nav class="space-y-2">
-                <MudLink Href="/products/Phones" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Phones</MudLink>
-                <MudLink Href="/products/Computers" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Laptops and TV's</MudLink>
-                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Watches</MudLink>
+                <MudLink Href="/products/Phone" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Phones</MudLink>
+                <MudLink Href="/products/Laptops" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Laptops</MudLink>
+                <MudLink Href="/products/Watches" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Watches</MudLink>
                 <MudLink Href="/products/Home Appliances" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Home Appliances</MudLink>
-                <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Medicine</MudLink>
+                <MudLink Href="/products/Tvs" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">TV's</MudLink>
                 <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Sports & Outdoor Electronics</MudLink>
                 <MudLink Href="/products/Kids Electronics" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Kids Electronics</MudLink>
                 <MudLink Href="#" Underline="Underline.None" Class="block rounded px-3 py-2 text-gray-700 hover:bg-gray-100">Accessories</MudLink>
@@ -44,28 +47,31 @@ else
     <!-- Hero Carousel Section -->
     <div class="flex-1 h-60 md:h-auto">
         <MudCarousel Class="mud-width-full min-h-52 md:h-full" ShowArrows="@arrows" ShowBullets="@bullets" EnableSwipeGesture="@enableSwipeGesture" AutoCycle="@autocycle" TData="object">
-
-            <MudCarouselItem Transition="transition">
-                <div class="relative flex h-full w-full overflow-hidden bg-black p-8 text-white md:rounded-lg">
-                    <div class="z-10 flex w-1/2 flex-col justify-center gap-2">
-                        <div class="mx-auto mb-4 flex items-center">
-                            <MudIcon Icon="@Icons.Custom.Brands.Apple" Class="mr-2 text-2xl" />
-                            <span class="text-lg">iPhone 14 Series</span>
+                @foreach(var ft in featured)
+                {
+                    <MudCarouselItem Transition="transition">
+                        <div class="relative flex h-full w-full overflow-hidden bg-black p-8 text-white md:rounded-lg">
+                            <div class="z-10 flex w-1/2 flex-col justify-center gap-2">
+                                <div class="mx-auto mb-4 flex items-center">
+                                    <MudIcon Icon="@Icons.Custom.Brands.Apple" Class="mr-2 text-2xl" />
+                                    <span class="text-lg">@ft.Name</span>
+                                </div>
+                                <h2 class="mx-auto mb-4 text-4xl leading-tight font-bold">
+                                    Up to 10%<br />off Voucher
+                                </h2>
+                                <MudButton Variant="Variant.Text" Color="Color.Primary" Class="text-white normal-case underline" Href="@($"/products/details/{ft.Id}")">
+                                    Shop Now →
+                                </MudButton>
+                            </div>
+                            <div class="absolute inset-y-0 right-0 w-1/2 bg-black">
+                                <img src="@(ft.ImagePath??ft.ImageUrl)" alt="@(ft.Name)" class="h-full w-full object-contain opacity-80" />
+                            </div>
                         </div>
-                        <h2 class="mx-auto mb-4 text-4xl leading-tight font-bold">
-                            Up to 10%<br />off Voucher
-                        </h2>
-                        <MudButton Variant="Variant.Text" Color="Color.Primary" Class="text-white normal-case underline">
-                            Shop Now →
-                        </MudButton>
-                    </div>
-                    <div class="absolute inset-y-0 right-0 w-1/2">
-                        <img src="./images/iphone.png" alt="iPhone" class="h-full w-full object-cover opacity-80" />
-                    </div>
-                </div>
-            </MudCarouselItem>
+                    </MudCarouselItem>
+                }
+                
 
-            <MudCarouselItem Transition="transition">
+            @*<MudCarouselItem Transition="transition">
                 <div class="relative flex h-full w-full overflow-hidden rounded-lg bg-black p-8 text-white">
                     <div class="z-10 flex w-1/2 flex-col justify-center gap-2">
                         <div class="mx-auto mb-4 flex items-center">
@@ -83,14 +89,14 @@ else
                         <img src="./images/iphone.png" alt="iPhone" class="h-full w-full object-cover opacity-80" />
                     </div>
                 </div>
-            </MudCarouselItem>
+            </MudCarouselItem>*@
 
         </MudCarousel>
 
     </div>
 </section>
 
-    <section class="font-inter mt-10 w-full">
+    <section class="font-inter mt-10 w-full px-4">
         <!-- Flash Sales Header -->
         <div class="mb-6 flex flex-col gap-4">
             <div class="flex items-center">
@@ -132,20 +138,22 @@ else
 
             <!-- Slider Container -->
             <div id="slider"
-                class="flex overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] py-6 gap-4 snap-x snap-mandatory px-2 scroll-smooth">
+                 class="flex overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-6 gap-4 snap-x snap-mandatory px-2 scroll-smooth">
                 @foreach (var product in Products)
                 {
                     <div
                         class="snap-center flex-none w-72 transition-all duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] hover:-translate-y-3 hover:shadow-xl rounded-[15px] overflow-hidden">
                         <MudCard Class="w-full h-full">
                             <MudCardMedia Image="@product.ImageUrl" Title="@product.Name" Height="192"
-                                Class="h-48 bg-gray-50 flex justify-center items-center transition-transform duration-700 hover:scale-105 object-cover" />
+                                          Class="w-full h-full object-contain flex justify-center items-center transition-transform duration-700 hover:scale-105"
+                                          Style="background-size: contain; background-position: center; background-repeat: no-repeat;" />
+                            
 
                             <MudCardContent Class="p-4">
                                 <h4 class="font-semibold text-base truncate">@product.Name</h4>
                                 <p class="font-bold text-red-500">
                                     Ksh @product.Price
-                                    <span class="text-gray-400 line-through">Ksh @product.Price</span>
+                                    <span class="text-gray-400 line-through">Ksh @(product.Price + Math.Ceiling(product.Price * 1/5))</span>
                                 </p>
                                 <p class="text-yellow-500 text-sm">★★★★★ 5 </p>
 
@@ -220,7 +228,7 @@ else
         <h2 class="mb-6 text-2xl font-bold text-gray-900">Best Selling Products</h2>
 
         <MudGrid Gutter="GutterSize.Small" Justify="Justify.Center" Class="items-center">
-            @foreach(var product in Products )
+            @foreach(var product in topProducts )
             {
                 <MudItem xs="12" sm="6" md="3" Class="relative flex justify-center">
                     <MudCard Class="w-full cursor-pointer" @onclick="(()=>NavigateToDetails(product.Id))">
@@ -232,7 +240,7 @@ else
                                     Style="object-fit: cover; background-size: 250px;" />
                         <div class="absolute top-4 right-0 flex flex-col gap-1">
                             <MudIconButton Icon="@Icons.Material.Filled.FavoriteBorder" Variant="Variant.Text" Color="Color.Secondary" />
-                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Default" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Default" Href="@($"/products/details/{product.Id}")" />
                         </div>
                         <MudCardContent>
                             <h4 class="font-semibold">@product.Name</h4>
@@ -249,7 +257,7 @@ else
 </section>
 
 <!-- Music Experience Promo Section -->
-<section class="font-inter mt-14 bg-black text-white">
+<section class="font-inter my-14 bg-black text-white">
     <div class="mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-6 py-12 md:grid-cols-2 md:py-16">
 
         <!-- Left Text & Countdown -->
@@ -310,6 +318,13 @@ else
 
     // Products
     public List<Product> Products = new();
+    private List<TopProduct> topProducts = new();
+    private List<Product> flashSales = new();
+    private List<Product> featured = new();
+
+    //Date ranges
+    private DateTime startDate = DateTime.UtcNow.AddDays(-30);
+    private DateTime endDate = DateTime.UtcNow;
 
     // State flags
     private bool _cartMerged = false;
@@ -320,7 +335,10 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // Initialize categories
+        topProducts = (await OrderService.GetTopProductsAsync(startDate, endDate, 10)).ToList();
+        flashSales = (await RecommendationService.GetFlashSalesAsync(endDate)).ToList();
+        featured = (await RecommendationService.GetFeaturedProductsAsync()).ToList();
+
         Categories = new List<Category>
             {
             new Category{Id = 1, Name="iphones",Slug="smartphone"},
@@ -371,7 +389,6 @@ else
     {
         try
         {
-            // Get or create guestId
             var guestId = await JSRuntime.InvokeAsync<string>("cartStorage.getGuestId");
             if (string.IsNullOrWhiteSpace(guestId))
             {
@@ -393,6 +410,7 @@ else
 
                     if (merged)
                     {
+                        Console.WriteLine("cart is merged");
                         _cartMerged = true;
                         await JSRuntime.InvokeVoidAsync("cartStorage.clearGuestId");
                     }
@@ -429,4 +447,6 @@ else
     {
         NavigationManager.NavigateTo($"/products/details/{id}");
     }
+
+
 }
